@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Início - Sistema de Relatórios{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="bg-primary text-white rounded-3 p-5 text-center">
+            <h1 class="display-4 mb-3">
+                <i class="bi bi-file-text me-3"></i>
+                Sistema de Relatórios
+            </h1>
+            <p class="lead mb-4">
+                Gerencie, crie e compartilhe relatórios de forma simples e eficiente. 
+                Tenha controle total sobre suas informações com dashboard interativo, 
+                geração automática de PDFs e sistema de notificações.
+            </p>
+            {% if not user.is_authenticated %}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{% url 'authentication:register' %}" class="btn btn-light btn-lg me-md-2">
+                        <i class="bi bi-person-plus me-2"></i>Começar Agora
+                    </a>
+                    <a href="{% url 'authentication:login' %}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Fazer Login
+                    </a>
+                </div>
+            {% else %}
+                <a href="{% url 'dashboard:index' %}" class="btn btn-light btn-lg">
+                    <i class="bi bi-speedometer2 me-2"></i>Ir para Dashboard
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mb-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="h1 mb-3">Funcionalidades Principais</h2>
+        <p class="text-muted lead">Tudo o que você precisa para gerenciar seus relatórios</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-file-earmark-text text-white" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="card-title">Criação de Relatórios</h5>
+                <p class="card-text">
+                    Crie relatórios personalizados com categorias, datas e dados estruturados. 
+                    Interface intuitiva para facilitar o processo.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-success bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-file-pdf text-white" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="card-title">Geração de PDFs</h5>
+                <p class="card-text">
+                    Exporte seus relatórios em PDF e Excel automaticamente. 
+                    Formatação profissional e controle de downloads.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-info bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-speedometer2 text-white" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="card-title">Dashboard Interativo</h5>
+                <p class="card-text">
+                    Visualize estatísticas em tempo real com gráficos interativos. 
+                    Acompanhe o desempenho e atividade dos relatórios.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-warning bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-bell text-white" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="card-title">Notificações</h5>
+                <p class="card-text">
+                    Sistema completo de notificações em tempo real. 
+                    Receba alertas por email e no sistema.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-danger bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-people text-white" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="card-title">Colaboração</h5>
+                <p class="card-text">
+                    Trabalhe em equipe com diferentes níveis de acesso. 
+                    Compartilhe relatórios e gerencie permissões.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <div class="bg-secondary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-shield-check text-white" style="font-size: 2rem;"></i>
+                </div>
+                <h5 class="card-title">Segurança</h5>
+                <p class="card-text">
+                    Sistema seguro com autenticação robusta e controle de acesso. 
+                    Seus dados estão protegidos.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section (se houver dados) -->
+{% if user.is_authenticated %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Estatísticas Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h3 class="text-primary mb-0">--</h3>
+                            <small class="text-muted">Total de Relatórios</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h3 class="text-success mb-0">--</h3>
+                            <small class="text-muted">Relatórios Concluídos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h3 class="text-info mb-0">--</h3>
+                            <small class="text-muted">Downloads</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 class="text-warning mb-0">--</h3>
+                        <small class="text-muted">Usuários Ativos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Call to Action -->
+{% if not user.is_authenticated %}
+<div class="row">
+    <div class="col-12">
+        <div class="bg-light rounded-3 p-5 text-center">
+            <h3 class="mb-3">Pronto para começar?</h3>
+            <p class="text-muted mb-4">
+                Crie sua conta gratuitamente e comece a gerenciar seus relatórios hoje mesmo.
+            </p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <a href="{% url 'authentication:register' %}" class="btn btn-primary btn-lg me-md-2">
+                    <i class="bi bi-person-plus me-2"></i>Criar Conta Grátis
+                </a>
+                <a href="{% url 'core:about' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-info-circle me-2"></i>Saiba Mais
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

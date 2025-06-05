@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: relatorio-system
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
+    startCommand: gunicorn relatorio_system.wsgi:application
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_NAME
+        value: dbrelatorio_rqkg
+      - key: DB_USER
+        value: dbrelatorio_rqkg_user
+      - key: DB_PASSWORD
+        value: CJZUYC4FeqPg3FfSZDVu75oSaXhpzPwV
+      - key: DB_HOST
+        value: dpg-d10oti95pdvs73acede0-a.oregon-postgres.render.com
+      - key: DB_PORT
+        value: 5432 
