@@ -35,20 +35,23 @@ class Command(BaseCommand):
 
     def create_superuser(self):
         """Cria superusuário admin"""
-        if not User.objects.filter(username='admin').exists():
-            admin = User.objects.create_superuser(
-                username='admin',
-                email='admin@sistema.com',
-                password='admin123',
-                first_name='Administrador',
-                last_name='Sistema',
-                departamento='TI',
-                cargo='Administrador do Sistema',
-                is_manager=True
-            )
-            self.stdout.write(f'👤 Superusuário criado: admin / admin123')
-        else:
-            self.stdout.write('👤 Superusuário já existe')
+        try:
+            if not User.objects.filter(username='admin').exists():
+                admin = User.objects.create_superuser(
+                    username='admin',
+                    email='admin@sistema.com',
+                    password='admin123',
+                    first_name='Administrador',
+                    last_name='Sistema',
+                    departamento='TI',
+                    cargo='Administrador do Sistema',
+                    is_manager=True
+                )
+                self.stdout.write(f'👤 Superusuário criado: admin / admin123')
+            else:
+                self.stdout.write('👤 Superusuário já existe')
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'❌ Erro ao criar superusuário: {e}'))
 
     def create_sample_users(self):
         """Cria usuários de exemplo"""
@@ -92,12 +95,15 @@ class Command(BaseCommand):
         ]
         
         for user_data in users_data:
-            if not User.objects.filter(username=user_data['username']).exists():
-                user = User.objects.create_user(
-                    password='123456',
-                    **user_data
-                )
-                self.stdout.write(f'👤 Usuário criado: {user.username} / 123456')
+            try:
+                if not User.objects.filter(username=user_data['username']).exists():
+                    user = User.objects.create_user(
+                        password='123456',
+                        **user_data
+                    )
+                    self.stdout.write(f'👤 Usuário criado: {user.username} / 123456')
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'❌ Erro ao criar usuário {user_data["username"]}: {e}'))
 
     def create_report_categories(self):
         """Cria categorias de relatórios"""

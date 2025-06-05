@@ -3,7 +3,7 @@ services:
     name: relatorio-system
     env: python
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py makemigrations && python manage.py collectstatic --no-input && python manage.py migrate && python manage.py populate_database && python manage.py check_database
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate && python create_superuser.py
     startCommand: gunicorn relatorio_system.wsgi:application
     envVars:
       - key: DEBUG
