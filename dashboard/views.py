@@ -17,13 +17,13 @@ def index(request):
     
     # Estatísticas gerais
     total_reports = Report.objects.count()
-    user_reports = Report.objects.filter(author=user).count()
+    user_reports = Report.objects.filter(created_by=user).count()
     total_users = User.objects.count()
     recent_reports = Report.objects.order_by('-created_at')[:5]
     
     # Estatísticas por categoria
     categories_stats = ReportCategory.objects.annotate(
-        report_count=Count('report')
+        report_count=Count('reports')
     ).order_by('-report_count')
     
     # Relatórios por status
@@ -39,7 +39,7 @@ def index(request):
     
     # Top autores
     top_authors = User.objects.annotate(
-        report_count=Count('report')
+        report_count=Count('created_reports')
     ).filter(report_count__gt=0).order_by('-report_count')[:5]
     
     context = {
@@ -81,12 +81,12 @@ def analytics(request):
     
     # Relatórios por categoria
     category_data = list(ReportCategory.objects.annotate(
-        report_count=Count('report')
+        report_count=Count('reports')
     ).values('name', 'report_count', 'color'))
     
     # Usuários mais ativos
     active_users = list(User.objects.annotate(
-        report_count=Count('report')
+        report_count=Count('created_reports')
     ).filter(report_count__gt=0).order_by('-report_count')[:10].values(
         'username', 'first_name', 'last_name', 'report_count'
     ))
@@ -110,9 +110,9 @@ def api_reports_by_status(request):
     # Traduzir status para português
     status_translation = {
         'draft': 'Rascunho',
-        'processing': 'Processando',
-        'completed': 'Concluído',
-        'failed': 'Falhou',
+        'pending': 'Pendente',
+        'approved': 'Aprovado',
+        'rejected': 'Rejeitado',
     }
     
     for item in data:
@@ -125,7 +125,7 @@ def api_reports_by_status(request):
 def api_reports_by_category(request):
     """API para dados de relatórios por categoria"""
     data = list(ReportCategory.objects.annotate(
-        report_count=Count('report')
+        report_count=Count('reports')
     ).values('name', 'report_count', 'color'))
     
     return JsonResponse(data, safe=False)
@@ -145,11 +145,11 @@ def api_recent_activity(request):
     for report in reports:
         data.append({
             'title': report.title,
-            'author': report.author.get_full_name(),
+            'author': report.created_by.get_full_name(),
             'category': report.category.name,
             'status': report.get_status_display(),
             'created_at': report.created_at.strftime('%d/%m/%Y %H:%M'),
-            'url': report.get_absolute_url(),
+            'url': f'/reports/{report.id}/',
         })
     
     return JsonResponse(data, safe=False)
@@ -161,17 +161,17 @@ def user_statistics(request):
     user = request.user
     
     # Relatórios do usuário
-    user_reports = Report.objects.filter(author=user)
+    user_reports = Report.objects.filter(created_by=user)
     
     # Estatísticas
     stats = {
         'total_reports': user_reports.count(),
         'draft_reports': user_reports.filter(status='draft').count(),
-        'completed_reports': user_reports.filter(status='completed').count(),
-        'processing_reports': user_reports.filter(status='processing').count(),
-        'failed_reports': user_reports.filter(status='failed').count(),
-        'total_views': sum(report.views_count for report in user_reports),
-        'total_downloads': sum(report.downloads_count for report in user_reports),
+        'approved_reports': user_reports.filter(status='approved').count(),
+        'pending_reports': user_reports.filter(status='pending').count(),
+        'rejected_reports': user_reports.filter(status='rejected').count(),
+        'total_views': 0,  # Implementar depois
+        'total_downloads': 0,  # Implementar depois
     }
     
     # Relatórios por categoria do usuário
