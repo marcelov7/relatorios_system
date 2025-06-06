@@ -3,9 +3,11 @@ services:
     name: relatorio-system
     env: python
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate && python manage.py setup_admin && python manage.py create_test_user
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py makemigrations && python manage.py migrate && python manage.py setup_initial_data && python manage.py collectstatic --no-input && python force_password_reset.py
     startCommand: gunicorn relatorio_system.wsgi:application
     envVars:
+      - key: ENVIRONMENT
+        value: "production"
       - key: DEBUG
         value: "false"
       - key: SECRET_KEY

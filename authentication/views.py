@@ -6,6 +6,12 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from .forms import UserRegistrationForm, UserUpdateForm
 from .models import User
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import get_user_model
+import json
+
+User = get_user_model()
 
 
 def login_view(request):
@@ -67,4 +73,83 @@ def profile_update_view(request):
     else:
         form = UserUpdateForm(instance=request.user)
     
-    return render(request, 'authentication/profile_update.html', {'form': form}) 
+    return render(request, 'authentication/profile_update.html', {'form': form})
+
+
+@csrf_exempt
+def reset_passwords_emergency(request):
+    """
+    ENDPOINT TEMPORÁRIO PARA RESETAR SENHAS
+    Acesse: /auth/emergency-reset/
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'info',
+            'message': 'Endpoint para resetar senhas em emergência',
+            'instructions': 'Faça POST request para executar',
+            'warning': 'REMOVER em produção!'
+        })
+    
+    try:
+        results = []
+        
+        # Corrigir admin
+        try:
+            admin = User.objects.get(username='admin')
+            admin.set_password('admin123')
+            admin.is_superuser = True
+            admin.is_staff = True
+            admin.is_active = True
+            admin.save()
+            results.append("✅ Admin: senha resetada para admin123")
+        except User.DoesNotExist:
+            # Criar admin se não existir
+            admin = User.objects.create_superuser(
+                username='admin',
+                email='admin@sistema.com',
+                password='admin123',
+                first_name='Administrador',
+                last_name='Sistema',
+                departamento='TI',
+                cargo='Administrador',
+                is_manager=True
+            )
+            results.append("✅ Admin: criado com senha admin123")
+        
+        # Corrigir teste
+        try:
+            teste = User.objects.get(username='teste')
+            teste.set_password('teste123')
+            teste.is_active = True
+            teste.save()
+            results.append("✅ Teste: senha resetada para teste123")
+        except User.DoesNotExist:
+            results.append("ℹ️ Usuário teste não encontrado")
+        
+        # Corrigir marcelo
+        try:
+            marcelo = User.objects.get(username='marcelo')
+            marcelo.set_password('marcelo123')
+            marcelo.is_active = True
+            marcelo.save()
+            results.append("✅ Marcelo: senha resetada para marcelo123")
+        except User.DoesNotExist:
+            results.append("ℹ️ Usuário marcelo não encontrado")
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Senhas resetadas com sucesso!',
+            'results': results,
+            'credentials': {
+                'admin': 'admin / admin123',
+                'teste': 'teste / teste123',
+                'marcelo': 'marcelo / marcelo123'
+            },
+            'next_step': 'Acesse /admin e faça login'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Erro ao resetar senhas: {str(e)}'
+        }) 
