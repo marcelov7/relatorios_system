@@ -209,5 +209,11 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1',
 ]
 
+# CSRF cookie settings for cross-domain support
+CSRF_COOKIE_DOMAIN = None  # Allow any domain
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access
+CSRF_COOKIE_SAMESITE = 'Lax'  # Allow cross-site requests
+CSRF_USE_SESSIONS = False  # Use cookies instead of sessions
+
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User' 
