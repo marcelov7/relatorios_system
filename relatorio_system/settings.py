@@ -196,11 +196,12 @@ if ENVIRONMENT == 'production' or not DEBUG:
     # Forçar cookies inseguros para HTTP
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
+    # DESABILITAR completamente redirecionamentos HTTPS
+    SECURE_SSL_REDIRECT = False
     # Comentado até implementar HTTPS
     # SECURE_HSTS_SECONDS = 86400
     # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     # SECURE_HSTS_PRELOAD = True
-    # SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
