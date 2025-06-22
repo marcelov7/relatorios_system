@@ -2,10 +2,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 from django.http import JsonResponse
-from .models import Local, Equipamento
-from .forms import LocalForm, EquipamentoForm, LocalFilterForm, EquipamentoFilterForm
+from .models import Local, Equipamento, Motor
+from .forms import LocalForm, EquipamentoForm, LocalFilterForm, EquipamentoFilterForm, MotorForm, MotorFilterForm
 
 
 # Views para Locais
@@ -325,3 +325,193 @@ def api_stats_local(request, local_id):
             'success': False,
             'error': 'Local não encontrado'
         })
+
+
+# Views para Motores
+@login_required
+def motor_list(request):
+    """Lista de motores elétricos"""
+    motores = Motor.objects.select_related('local', 'responsavel')
+    
+    # Filtros
+    form = MotorFilterForm(request.GET)
+    if form.is_valid():
+        local = form.cleaned_data.get('local')
+        tipo = form.cleaned_data.get('tipo')
+        status_operacional = form.cleaned_data.get('status_operacional')
+        fabricante = form.cleaned_data.get('fabricante')
+        potencia_min = form.cleaned_data.get('potencia_min')
+        potencia_max = form.cleaned_data.get('potencia_max')
+        corrente_min = form.cleaned_data.get('corrente_min')
+        corrente_max = form.cleaned_data.get('corrente_max')
+        search = form.cleaned_data.get('search')
+        
+        if local:
+            motores = motores.filter(local=local)
+        if tipo:
+            motores = motores.filter(tipo=tipo)
+        if status_operacional:
+            motores = motores.filter(status_operacional=status_operacional)
+        if fabricante:
+            motores = motores.filter(fabricante__icontains=fabricante)
+        if potencia_min:
+            motores = motores.filter(potencia__gte=potencia_min)
+        if potencia_max:
+            motores = motores.filter(potencia__lte=potencia_max)
+        if corrente_min:
+            motores = motores.filter(corrente__gte=corrente_min)
+        if corrente_max:
+            motores = motores.filter(corrente__lte=corrente_max)
+        if search:
+            motores = motores.filter(
+                Q(nome__icontains=search) |
+                Q(codigo__icontains=search) |
+                Q(fabricante__icontains=search) |
+                Q(modelo__icontains=search) |
+                Q(numero_serie__icontains=search)
+            )
+    
+    # Paginação
+    paginator = Paginator(motores, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'filter_form': form,
+    }
+    
+    return render(request, 'locations/motor_list.html', context)
+
+
+@login_required
+def motor_detail(request, pk):
+    """Detalhes do motor"""
+    motor = get_object_or_404(Motor, pk=pk)
+    
+    context = {
+        'motor': motor,
+    }
+    
+    return render(request, 'locations/motor_detail.html', context)
+
+
+@login_required
+def motor_create(request):
+    """Criar novo motor"""
+    if request.method == 'POST':
+        form = MotorForm(request.POST)
+        if form.is_valid():
+            motor = form.save()
+            messages.success(request, f'Motor "{motor.nome}" criado com sucesso!')
+            return redirect('locations:motor_detail', pk=motor.pk)
+    else:
+        form = MotorForm()
+        # Se foi passado um local_id, pré-selecionar
+        local_id = request.GET.get('local_id')
+        if local_id:
+            try:
+                local = Local.objects.get(pk=local_id)
+                form.initial['local'] = local
+            except Local.DoesNotExist:
+                pass
+    
+    return render(request, 'locations/motor_form.html', {
+        'form': form,
+        'title': 'Cadastrar Motor'
+    })
+
+
+@login_required
+def motor_edit(request, pk):
+    """Editar motor"""
+    motor = get_object_or_404(Motor, pk=pk)
+    
+    if request.method == 'POST':
+        form = MotorForm(request.POST, instance=motor)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Motor "{motor.nome}" atualizado com sucesso!')
+            return redirect('locations:motor_detail', pk=motor.pk)
+    else:
+        form = MotorForm(instance=motor)
+    
+    return render(request, 'locations/motor_form.html', {
+        'form': form,
+        'motor': motor,
+        'title': 'Editar Motor'
+    })
+
+
+@login_required
+def motor_delete(request, pk):
+    """Excluir motor"""
+    motor = get_object_or_404(Motor, pk=pk)
+    
+    if request.method == 'POST':
+        nome = motor.nome
+        local = motor.local
+        motor.delete()
+        messages.success(request, f'Motor "{nome}" excluído com sucesso!')
+        return redirect('locations:motor_list')
+    
+    return render(request, 'locations/motor_confirm_delete.html', {'motor': motor})
+
+
+@login_required
+def motor_dashboard(request):
+    """Dashboard de motores"""
+    # Estatísticas gerais
+    total_motores = Motor.objects.count()
+    motores_operando = Motor.objects.filter(status_operacional='operando').count()
+    motores_manutencao = Motor.objects.filter(status_operacional='manutencao').count()
+    motores_inativos = Motor.objects.filter(status_operacional='inativo').count()
+    motores_almoxarifado = Motor.objects.filter(status_operacional='almoxarifado').count()
+    
+    # Motores por tipo
+    motores_por_tipo = Motor.objects.values('tipo').annotate(
+        quantidade=Count('id')
+    ).order_by('-quantidade')
+    
+    # Motores por local
+    motores_por_local = Motor.objects.values(
+        'local__nome'
+    ).annotate(
+        quantidade=Count('id')
+    ).order_by('-quantidade')[:10]
+    
+    # Fabricantes mais utilizados
+    fabricantes = Motor.objects.values('fabricante').annotate(
+        quantidade=Count('id')
+    ).order_by('-quantidade')[:10]
+    
+    # Potência total instalada
+    potencia_total = Motor.objects.aggregate(
+        total_cv=Sum('potencia')
+    )['total_cv'] or 0
+    
+    # Conversão para kW
+    potencia_total_kw = round(float(potencia_total) * 0.735, 2)
+    
+    # Motores recentes (últimos 30 dias)
+    from datetime import datetime, timedelta
+    data_limite = datetime.now() - timedelta(days=30)
+    motores_recentes = Motor.objects.filter(
+        data_criacao__gte=data_limite
+    ).order_by('-data_criacao')[:5]
+    
+    context = {
+        'total_motores': total_motores,
+        'motores_operando': motores_operando,
+        'motores_manutencao': motores_manutencao,
+        'motores_inativos': motores_inativos,
+        'motores_almoxarifado': motores_almoxarifado,
+        'motores_por_tipo': motores_por_tipo,
+        'motores_por_local': motores_por_local,
+        'fabricantes': fabricantes,
+        'potencia_total': potencia_total,
+        'potencia_total_kw': potencia_total_kw,
+        'motores_recentes': motores_recentes,
+    }
+    
+    return render(request, 'locations/motor_dashboard.html', context)

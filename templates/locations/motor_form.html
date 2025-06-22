@@ -1,0 +1,532 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-lightning-charge me-2 text-warning"></i>{{ title }}
+                </h1>
+                <!-- Botões Desktop -->
+                <div class="btn-toolbar mb-2 mb-md-0 d-none d-md-block">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'locations:motor_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Voltar à Lista
+                        </a>
+                        {% if motor %}
+                        <a href="{% url 'locations:motor_detail' motor.pk %}" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye me-1"></i>Ver Motor
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Formulário -->
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-form me-2"></i>Informações do Motor Elétrico
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate id="motorForm">
+                        {% csrf_token %}
+                        
+                        <!-- Informações Básicas -->
+                        <div class="form-section">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Informações Básicas
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.local.id_for_label }}" class="form-label">
+                                            {{ form.local.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.local }}
+                                        {% if form.local.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.local.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.nome.id_for_label }}" class="form-label">
+                                            {{ form.nome.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.nome }}
+                                        {% if form.nome.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.nome.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.codigo.id_for_label }}" class="form-label">
+                                            {{ form.codigo.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.codigo }}
+                                        {% if form.codigo.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.codigo.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.tipo.id_for_label }}" class="form-label">
+                                            {{ form.tipo.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.tipo }}
+                                        {% if form.tipo.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.tipo.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                                            {{ form.descricao.label }}
+                                        </label>
+                                        {{ form.descricao }}
+                                        {% if form.descricao.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.descricao.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Especificações Técnicas -->
+                        <div class="form-section">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-lightning-charge me-2"></i>Especificações Técnicas
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.potencia.id_for_label }}" class="form-label">
+                                            {{ form.potencia.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.potencia }}
+                                        <div class="spec-help">{{ form.potencia.help_text }}</div>
+                                        {% if form.potencia.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.potencia.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.voltagem.id_for_label }}" class="form-label">
+                                            {{ form.voltagem.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.voltagem }}
+                                        <div class="spec-help">{{ form.voltagem.help_text }}</div>
+                                        {% if form.voltagem.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.voltagem.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.corrente.id_for_label }}" class="form-label">
+                                            {{ form.corrente.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.corrente }}
+                                        <div class="spec-help">{{ form.corrente.help_text }}</div>
+                                        {% if form.corrente.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.corrente.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.rpm.id_for_label }}" class="form-label">
+                                            {{ form.rpm.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.rpm }}
+                                        <div class="spec-help">{{ form.rpm.help_text }}</div>
+                                        {% if form.rpm.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.rpm.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações do Fabricante -->
+                        <div class="form-section">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-building me-2"></i>Informações do Fabricante
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.fabricante.id_for_label }}" class="form-label">
+                                            {{ form.fabricante.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.fabricante }}
+                                        {% if form.fabricante.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.fabricante.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.modelo.id_for_label }}" class="form-label">
+                                            {{ form.modelo.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.modelo }}
+                                        {% if form.modelo.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.modelo.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.numero_serie.id_for_label }}" class="form-label">
+                                            {{ form.numero_serie.label }} <span class="required-field">*</span>
+                                        </label>
+                                        {{ form.numero_serie }}
+                                        {% if form.numero_serie.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.numero_serie.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.data_instalacao.id_for_label }}" class="form-label">
+                                            {{ form.data_instalacao.label }}
+                                        </label>
+                                        {{ form.data_instalacao }}
+                                        {% if form.data_instalacao.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.data_instalacao.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status e Responsabilidade -->
+                        <div class="form-section">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-person-gear me-2"></i>Status e Responsabilidade
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.status_operacional.id_for_label }}" class="form-label">
+                                            {{ form.status_operacional.label }}
+                                        </label>
+                                        {{ form.status_operacional }}
+                                        {% if form.status_operacional.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.status_operacional.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.responsavel.id_for_label }}" class="form-label">
+                                            {{ form.responsavel.label }}
+                                        </label>
+                                        {{ form.responsavel }}
+                                        {% if form.responsavel.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.responsavel.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check mb-3">
+                                        {{ form.ativo }}
+                                        <label class="form-check-label" for="{{ form.ativo.id_for_label }}">
+                                            {{ form.ativo.label }}
+                                        </label>
+                                        {% if form.ativo.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.ativo.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'locations:motor_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-1"></i>
+                                {% if motor %}Atualizar{% else %}Cadastrar{% endif %} Motor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Voltar -->
+            <a href="{% url 'locations:motor_list' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-arrow-left fs-5 d-block"></i>
+                <small>Voltar</small>
+            </a>
+            
+            <!-- Visualizar (se editando) -->
+            {% if motor %}
+            <a href="{% url 'locations:motor_detail' motor.pk %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-eye fs-5 d-block"></i>
+                <small>Ver</small>
+            </a>
+            {% endif %}
+            
+            <!-- Salvar -->
+            <button type="button" class="btn btn-link text-success p-2 flex-fill text-center" id="saveFormBtn">
+                <i class="bi bi-check-circle fs-5 d-block"></i>
+                <small>{% if motor %}Atualizar{% else %}Cadastrar{% endif %}</small>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validação de formulário Bootstrap
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Calculadora de potência (CV para kW)
+    const potenciaField = document.getElementById('{{ form.potencia.id_for_label }}');
+    if (potenciaField) {
+        potenciaField.addEventListener('input', function() {
+            const cv = parseFloat(this.value);
+            if (!isNaN(cv)) {
+                const kw = (cv * 0.735).toFixed(2);
+                const helpText = this.parentNode.querySelector('.spec-help');
+                if (helpText) {
+                    helpText.innerHTML = `{{ form.potencia.help_text }} • Equivalente a ${kw} kW`;
+                }
+            }
+        });
+    }
+
+    // Funcionalidade mobile
+    // Botão voltar ao topo
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.style.display = 'none';
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Botão salvar mobile
+    const saveFormBtn = document.getElementById('saveFormBtn');
+    if (saveFormBtn) {
+        saveFormBtn.addEventListener('click', function() {
+            const form = document.getElementById('motorForm');
+            if (form) {
+                form.submit();
+            }
+        });
+    }
+    
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Navbar Mobile Fixa */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Botão Voltar ao Topo */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1020;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.back-to-top i {
+    font-size: 1.2rem;
+}
+
+.back-to-top.show {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+
+.form-section {
+    border-left: 4px solid #28a745;
+    padding-left: 1rem;
+    margin-bottom: 2rem;
+}
+.form-section h6 {
+    color: #28a745;
+    font-weight: 600;
+}
+.spec-help {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+.required-field {
+    color: #dc3545;
+}
+</style>
+{% endblock %} 

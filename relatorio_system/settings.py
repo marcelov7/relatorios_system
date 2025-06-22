@@ -18,7 +18,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 # Detectar ambiente automaticamente
 ENVIRONMENT = config('ENVIRONMENT', default='development')  # development ou production
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,.render.com').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,.render.com,app.devaxis.com.br').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -80,8 +80,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'relatorio_system.wsgi.application'
 
 # Configuração do banco de dados baseada no ambiente
-if ENVIRONMENT == 'production' or config('DB_HOST', default='').endswith('.render.com'):
-    # Configuração para PostgreSQL (Render/Produção)
+if config('DB_HOST', default='').endswith('.render.com'):
+    # Configuração para PostgreSQL (Render)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -95,8 +95,23 @@ if ENVIRONMENT == 'production' or config('DB_HOST', default='').endswith('.rende
             },
         }
     }
+elif ENVIRONMENT == 'production' or config('DB_HOST', default='') == 'db':
+    # Configuração para PostgreSQL (Docker)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='relatorio_system'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='M@rcelo1809@3033'),
+            'HOST': config('DB_HOST', default='db'),
+            'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'sslmode': 'disable',
+            },
+        }
+    }
 else:
-    # Configuração para SQLite (Desenvolvimento local - compatibilidade)
+    # Configuração para SQLite (Desenvolvimento local)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

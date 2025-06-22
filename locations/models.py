@@ -1,7 +1,6 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import date, timedelta
 
@@ -191,3 +190,133 @@ class Equipamento(models.Model):
         if self.garantia_ate:
             return self.garantia_ate >= date.today()
         return False
+
+
+class Motor(models.Model):
+    """Modelo para gerenciamento de motores elétricos"""
+    
+    STATUS_OPERACIONAL_CHOICES = [
+        ('operando', 'Operando'),
+        ('manutencao', 'Manutenção'),
+        ('inativo', 'Inativo'),
+        ('almoxarifado', 'Almoxarifado'),
+    ]
+    
+    TIPO_CHOICES = [
+        ('monofasico', 'Monofásico'),
+        ('trifasico', 'Trifásico'),
+        ('cc', 'Corrente Contínua'),
+        ('servo', 'Servo Motor'),
+        ('passo', 'Motor de Passo'),
+        ('outro', 'Outro'),
+    ]
+    
+    # Identificação
+    nome = models.CharField(max_length=100, verbose_name='Nome do Motor')
+    codigo = models.CharField(max_length=50, unique=True, verbose_name='Código')
+    descricao = models.TextField(blank=True, null=True, verbose_name='Descrição')
+    tipo = models.CharField(max_length=50, choices=TIPO_CHOICES, verbose_name='Tipo')
+    
+    # Especificações Técnicas
+    potencia = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name='Potência (CV)',
+        help_text='Potência em cavalos-vapor (CV)'
+    )
+    voltagem = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name='Voltagem (V)',
+        help_text='Tensão nominal em Volts'
+    )
+    corrente = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name='Corrente (A)',
+        help_text='Corrente nominal em Ampères'
+    )
+    rpm = models.IntegerField(verbose_name='RPM', help_text='Rotações por minuto')
+    
+    # Informações do Fabricante
+    fabricante = models.CharField(max_length=100, verbose_name='Fabricante')
+    modelo = models.CharField(max_length=100, verbose_name='Modelo')
+    numero_serie = models.CharField(max_length=100, unique=True, verbose_name='Número de Série')
+    
+    # Datas
+    data_instalacao = models.DateField(blank=True, null=True, verbose_name='Data de Instalação')
+    
+    # Status
+    status_operacional = models.CharField(
+        max_length=20, 
+        choices=STATUS_OPERACIONAL_CHOICES, 
+        default='operando', 
+        verbose_name='Status Operacional'
+    )
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    
+    # Local onde está instalado (relacionamento com Local)
+    local = models.ForeignKey(
+        Local, 
+        on_delete=models.CASCADE, 
+        related_name='motores', 
+        verbose_name='Local de Instalação'
+    )
+    
+    # Responsável pelo motor
+    responsavel = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name='Responsável',
+        related_name='motores_responsavel'
+    )
+    
+    # Timestamps
+    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name='Data de Criação')
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name='Data de Atualização')
+    
+    class Meta:
+        verbose_name = 'Motor'
+        verbose_name_plural = 'Motores'
+        ordering = ['nome']
+        
+    def __str__(self):
+        return f"{self.nome} ({self.codigo})"
+    
+    def get_absolute_url(self):
+        return reverse('locations:motor_detail', kwargs={'pk': self.pk})
+    
+    def get_status_color(self):
+        colors = {
+            'operando': 'success',
+            'manutencao': 'warning',
+            'inativo': 'danger',
+            'almoxarifado': 'info',
+        }
+        return colors.get(self.status_operacional, 'secondary')
+    
+    def get_potencia_kw(self):
+        """Converte potência de CV para kW"""
+        return round(float(self.potencia) * 0.735, 2)
+    
+    def get_status_display_icon(self):
+        icons = {
+            'operando': 'bi-play-circle-fill text-success',
+            'manutencao': 'bi-tools text-warning', 
+            'inativo': 'bi-stop-circle-fill text-danger',
+            'almoxarifado': 'bi-archive-fill text-info',
+        }
+        return icons.get(self.status_operacional, 'bi-circle text-secondary')
+    
+    @property
+    def eficiencia_estimada(self):
+        """Calcula eficiência estimada baseada na potência"""
+        potencia_num = float(self.potencia)
+        if potencia_num <= 1:
+            return 75  # 75% para motores pequenos
+        elif potencia_num <= 10:
+            return 85  # 85% para motores médios
+        else:
+            return 92  # 92% para motores grandes

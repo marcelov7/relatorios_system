@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Motores Elétricos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        border-left: 4px solid #007bff;
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .metric-card.operando { border-left-color: #28a745; }
+    .metric-card.manutencao { border-left-color: #ffc107; }
+    .metric-card.inativo { border-left-color: #dc3545; }
+    .metric-card.almoxarifado { border-left-color: #17a2b8; }
+    .metric-card.total { border-left-color: #6f42c1; }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    .power-indicator {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    /* Navbar Mobile Fixa */
+    .mobile-navbar {
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 1030;
+        height: 70px;
+    }
+
+    .mobile-navbar .btn-link {
+        text-decoration: none;
+        border: none;
+        background: none;
+        color: inherit;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-navbar .btn-link i {
+        font-size: 1.25rem;
+        margin-bottom: 2px;
+        line-height: 1;
+    }
+
+    .mobile-navbar .btn-link small {
+        font-size: 0.75rem;
+        line-height: 1;
+    }
+
+    .mobile-navbar .btn-link:hover {
+        background-color: rgba(0,0,0,0.05);
+        border-radius: 8px;
+        transform: translateY(-2px);
+    }
+
+    .mobile-navbar .btn-link:active {
+        transform: translateY(0);
+        background-color: rgba(0,0,0,0.1);
+    }
+
+    /* Botão Voltar ao Topo */
+    .back-to-top {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        z-index: 1020;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .back-to-top:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .back-to-top i {
+        font-size: 1.2rem;
+    }
+
+    .back-to-top.show {
+        animation: bounceIn 0.5s ease;
+    }
+
+    @keyframes bounceIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.3);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Ajuste para não sobrepor a navbar mobile */
+    @media (max-width: 767.98px) {
+        body {
+            padding-bottom: 70px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard - Motores Elétricos
+                </h1>
+                
+                <!-- Botões Desktop -->
+                <div class="btn-toolbar mb-2 mb-md-0 d-none d-md-block">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'locations:motor_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-list me-1"></i>Ver Lista
+                        </a>
+                        <a href="{% url 'locations:motor_create' %}" class="btn btn-success">
+                            <i class="bi bi-plus-lg me-1"></i>Novo Motor
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Métricas Principais -->
+    <div class="row mb-4">
+        <div class="col-lg col-md-6 mb-3">
+            <div class="card metric-card total h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-lightning-charge text-purple mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mb-1">{{ total_motores }}</h3>
+                    <p class="text-muted mb-0">Total de Motores</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 mb-3">
+            <div class="card metric-card operando h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-play-circle-fill text-success mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mb-1">{{ motores_operando }}</h3>
+                    <p class="text-muted mb-0">Em Operação</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 mb-3">
+            <div class="card metric-card manutencao h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-tools text-warning mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mb-1">{{ motores_manutencao }}</h3>
+                    <p class="text-muted mb-0">Em Manutenção</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 mb-3">
+            <div class="card metric-card almoxarifado h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-archive-fill text-info mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mb-1">{{ motores_almoxarifado }}</h3>
+                    <p class="text-muted mb-0">Almoxarifado</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg col-md-6 mb-3">
+            <div class="card metric-card inativo h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-stop-circle-fill text-danger mb-2" style="font-size: 2.5rem;"></i>
+                    <h3 class="mb-1">{{ motores_inativos }}</h3>
+                    <p class="text-muted mb-0">Inativos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Potência Total Instalada -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning-charge me-2"></i>Potência Total Instalada
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="power-indicator">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="h2 mb-0">{{ potencia_total }} CV</div>
+                                <small>Cavalos-Vapor</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="h2 mb-0">{{ potencia_total_kw }} kW</div>
+                                <small>Quilowatts</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motores por Tipo -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>Motores por Tipo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if motores_por_tipo %}
+                        {% for tipo in motores_por_tipo %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ tipo.tipo|title }}</span>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 100px; height: 20px;">
+                                    <div class="progress-bar bg-info" 
+                                         style="width: {% widthratio tipo.quantidade total_motores 100 %}%">
+                                    </div>
+                                </div>
+                                <strong>{{ tipo.quantidade }}</strong>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-info-circle text-muted"></i>
+                            <p class="text-muted mt-2">Nenhum dado disponível</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Motores por Local -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>Motores por Local (Top 10)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if motores_por_local %}
+                        {% for local in motores_por_local %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">{{ local.local__nome|truncatechars:25 }}</span>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 80px; height: 18px;">
+                                    <div class="progress-bar bg-warning" 
+                                         style="width: {% widthratio local.quantidade total_motores 100 %}%">
+                                    </div>
+                                </div>
+                                <strong class="small">{{ local.quantidade }}</strong>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-info-circle text-muted"></i>
+                            <p class="text-muted mt-2">Nenhum dado disponível</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Fabricantes Mais Utilizados -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-award me-2"></i>Fabricantes (Top 10)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if fabricantes %}
+                        {% for fabricante in fabricantes %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">{{ fabricante.fabricante|truncatechars:20 }}</span>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 80px; height: 18px;">
+                                    <div class="progress-bar bg-secondary" 
+                                         style="width: {% widthratio fabricante.quantidade total_motores 100 %}%">
+                                    </div>
+                                </div>
+                                <strong class="small">{{ fabricante.quantidade }}</strong>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-info-circle text-muted"></i>
+                            <p class="text-muted mt-2">Nenhum dado disponível</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Motores Cadastrados Recentemente -->
+    {% if motores_recentes %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock me-2"></i>Motores Cadastrados Recentemente (Últimos 30 dias)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for motor in motores_recentes %}
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card border-left-success">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-lightning-charge text-warning me-2" style="font-size: 1.5rem;"></i>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ motor.nome }}</h6>
+                                            <small class="text-muted">
+                                                {{ motor.fabricante }} - {{ motor.potencia }} CV
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar3 me-1"></i>
+                                                {{ motor.data_criacao|date:"d/m/Y" }}
+                                            </small>
+                                        </div>
+                                        <a href="{% url 'locations:motor_detail' motor.pk %}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    
+</div>
+
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Dashboard (ativo) -->
+            <a href="{% url 'locations:motor_dashboard' %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-speedometer2 fs-5 d-block"></i>
+                <small>Dashboard</small>
+            </a>
+            
+            <!-- Novo Motor -->
+            <a href="{% url 'locations:motor_create' %}" class="btn btn-link text-primary p-2 flex-fill text-center">
+                <i class="bi bi-plus-circle fs-5 d-block"></i>
+                <small>Novo</small>
+            </a>
+            
+            <!-- Lista -->
+            <a href="{% url 'locations:motor_list' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-list-ul fs-5 d-block"></i>
+                <small>Lista</small>
+            </a>
+            
+            <!-- Analytics -->
+            <a href="{% url 'reports:analytics' %}" class="btn btn-link text-warning p-2 flex-fill text-center">
+                <i class="bi bi-graph-up fs-5 d-block"></i>
+                <small>Analytics</small>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funcionalidade mobile
+    // Botão voltar ao topo
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.style.display = 'none';
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+
+ 
