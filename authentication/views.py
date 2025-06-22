@@ -15,6 +15,7 @@ import os
 User = get_user_model()
 
 
+@csrf_exempt
 def login_view(request):
     """View de login"""
     if request.user.is_authenticated:
