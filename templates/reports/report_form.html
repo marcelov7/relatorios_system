@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - Sistema de Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilo personalizado para o slider de progresso */
+.form-range {
+    height: 8px;
+    background: linear-gradient(to right, #6c757d 0%, #ffc107 1%, #28a745 100%);
+    border-radius: 5px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.form-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0d6efd;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.form-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0d6efd;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Animação suave para mudanças */
+#progress-value {
+    transition: all 0.3s ease;
+}
+
+.form-select {
+    transition: border-color 0.3s ease;
+}
+
+/* Navbar Mobile Fixa */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Botão Voltar ao Topo */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1020;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.back-to-top i {
+    font-size: 1.2rem;
+}
+
+.back-to-top.show {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-earmark-text me-2"></i>{{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="reportForm">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                <i class="bi bi-pencil me-1"></i>{{ form.titulo.label }}
+                            </label>
+                            {{ form.titulo }}
+                            {% if form.titulo.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.titulo.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                                <i class="bi bi-text-paragraph me-1"></i>{{ form.descricao.label }}
+                            </label>
+                            {{ form.descricao }}
+                            {% if form.descricao.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.descricao.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.local.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt me-1"></i>{{ form.local.label }}
+                            </label>
+                            {{ form.local }}
+                            {% if form.local.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.local.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.equipamento.id_for_label }}" class="form-label">
+                                <i class="bi bi-gear me-1"></i>{{ form.equipamento.label }}
+                            </label>
+                            {{ form.equipamento }}
+                            {% if form.equipamento.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.equipamento.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.atribuido_para.id_for_label }}" class="form-label">
+                                <i class="bi bi-person-check me-1"></i>{{ form.atribuido_para.label }}
+                            </label>
+                            {{ form.atribuido_para }}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Se não atribuído, o autor será responsável pela execução.
+                            </div>
+                            {% if form.atribuido_para.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.atribuido_para.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.data_ocorrencia.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-event me-1"></i>{{ form.data_ocorrencia.label }}
+                            </label>
+                            {{ form.data_ocorrencia }}
+                            {% if form.data_ocorrencia.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.data_ocorrencia.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.progresso.id_for_label }}" class="form-label">
+                                <i class="bi bi-bar-chart me-1"></i>{{ form.progresso.label }}
+                                <span id="progress-value" class="badge bg-primary ms-2">0%</span>
+                            </label>
+                            <div class="mb-2">
+                                {{ form.progresso }}
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                            {% if form.progresso.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.progresso.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <i class="bi bi-flag me-1"></i>{{ form.status.label }}
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.status.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.prioridade.id_for_label }}" class="form-label">
+                                <i class="bi bi-exclamation-triangle me-1"></i>{{ form.prioridade.label }}
+                            </label>
+                            {{ form.prioridade }}
+                            {% if form.prioridade.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.prioridade.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.editavel }}
+                                <label class="form-check-label" for="{{ form.editavel.id_for_label }}">
+                                    <i class="bi bi-pencil-square me-1"></i>{{ form.editavel.label }}
+                                </label>
+                            </div>
+                            {% if form.editavel.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.editavel.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Campo de Imagem Principal -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="{{ form.imagem_principal.id_for_label }}" class="form-label">
+                                <i class="bi bi-image me-1"></i>{{ form.imagem_principal.label }}
+                            </label>
+                            {{ form.imagem_principal }}
+                            {% if form.imagem_principal.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.imagem_principal.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Formatos aceitos: JPG, PNG, GIF. Tamanho máximo: 5MB
+                            </div>
+                            {% if report.imagem_principal %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Imagem atual:</small><br>
+                                    <img src="{{ report.imagem_principal.url }}" alt="Imagem atual" class="img-thumbnail" style="max-width: 200px;">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Seção de Imagens Adicionais -->
+                    {% if image_formset %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-images me-2"></i>Imagens Adicionais
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {{ image_formset.management_form }}
+                            <div id="image-formset">
+                                {% for form in image_formset %}
+                                    <div class="image-form-row mb-3 p-3 border rounded">
+                                        {% if form.non_field_errors %}
+                                            <div class="alert alert-danger">
+                                                {{ form.non_field_errors }}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <label for="{{ form.imagem.id_for_label }}" class="form-label">
+                                                    Imagem {{ forloop.counter }}
+                                                </label>
+                                                {{ form.imagem }}
+                                                {% if form.imagem.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.imagem.errors.0 }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                                                    Descrição
+                                                </label>
+                                                {{ form.descricao }}
+                                                {% if form.descricao.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.descricao.errors.0 }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        {% if form.instance.pk and form.instance.imagem %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">Imagem atual:</small><br>
+                                                <img src="{{ form.instance.imagem.url }}" alt="Imagem {{ forloop.counter }}" class="img-thumbnail" style="max-width: 150px;">
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if form.DELETE %}
+                                            <div class="form-check mt-2">
+                                                {{ form.DELETE }}
+                                                <label class="form-check-label text-danger" for="{{ form.DELETE.id_for_label }}">
+                                                    <i class="bi bi-trash me-1"></i>Remover esta imagem
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% for hidden in form.hidden_fields %}
+                                            {{ hidden }}
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Você pode adicionar até 10 imagens adicionais. Deixe os campos vazios se não quiser adicionar imagens.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Botões Desktop -->
+                    <div class="d-flex justify-content-between d-none d-md-flex">
+                        <a href="{% url 'reports:list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Voltar
+                        </a>
+                        <div>
+                            {% if report %}
+                                <a href="{% url 'reports:detail' report.pk %}" class="btn btn-outline-primary me-2">
+                                    <i class="bi bi-eye me-1"></i>Visualizar
+                                </a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i>
+                                {% if report %}Atualizar{% else %}Criar{% endif %} Relatório
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Espaçamento para navbar mobile -->
+                    <div class="d-md-none" style="height: 80px;"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Informações adicionais -->
+        {% if report %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Informações do Relatório
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Criado em:</strong> {{ report.data_criacao|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Última atualização:</strong> {{ report.data_atualizacao|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Autor:</strong> {{ report.usuario.get_full_name|default:report.usuario.username }}</p>
+                        <p><strong>Tenant ID:</strong> {{ report.tenant_id }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Voltar -->
+            <a href="{% url 'reports:list' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-arrow-left fs-5 d-block"></i>
+                <small>Voltar</small>
+            </a>
+            
+            <!-- Visualizar (se editando) -->
+            {% if report %}
+            <a href="{% url 'reports:detail' report.pk %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-eye fs-5 d-block"></i>
+                <small>Ver</small>
+            </a>
+            {% endif %}
+            
+            <!-- Salvar -->
+            <button type="button" class="btn btn-link text-success p-2 flex-fill text-center" id="saveFormBtn">
+                <i class="bi bi-check-circle fs-5 d-block"></i>
+                <small>{% if report %}Atualizar{% else %}Criar{% endif %}</small>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+{% load static %}
+<script src="{% static 'js/report_form.js' %}"></script>
+{% if not report %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setCurrentDateTime();
+});
+</script>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funcionalidade mobile
+    // Botão voltar ao topo
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.style.display = 'none';
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Botão salvar mobile
+    const saveFormBtn = document.getElementById('saveFormBtn');
+    if (saveFormBtn) {
+        saveFormBtn.addEventListener('click', function() {
+            const form = document.getElementById('reportForm');
+            if (form) {
+                form.submit();
+            }
+        });
+    }
+    
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

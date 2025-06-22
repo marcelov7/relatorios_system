@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estrutura Organizacional{% endblock %}
+
+{% block extra_css %}
+<style>
+    .org-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .org-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: none;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .section-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+    
+    .item-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+    
+    .item-card:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .item-title {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-subtitle {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-description {
+        color: #666;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    .badge-nivel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .badge-setor {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .stats-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-number {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .reference-note {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .reference-note .icon {
+        color: #856404;
+        margin-right: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .org-header {
+            padding: 1.5rem 0;
+        }
+        
+        .org-card {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+        }
+        
+        .item-card {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="org-header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h2 class="mb-3">
+                    <i class="bi bi-diagram-3 me-3"></i>
+                    Estrutura Organizacional
+                </h2>
+                <p class="mb-0 opacity-75">
+                    Referência completa de perfis, unidades e setores para criação de usuários
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Estatísticas Resumo -->
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <div class="stats-summary">
+                <div class="stats-number">{{ perfis|length }}</div>
+                <div class="stats-label">Perfis</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-summary">
+                <div class="stats-number">{{ unidades|length }}</div>
+                <div class="stats-label">Unidades</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-summary">
+                <div class="stats-number">{{ setores|length }}</div>
+                <div class="stats-label">Setores</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-summary">
+                <div class="stats-number">{{ total_usuarios }}</div>
+                <div class="stats-label">Usuários</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nota de Referência -->
+    <div class="reference-note">
+        <h6>
+            <i class="bi bi-info-circle icon"></i>
+            Como usar esta referência:
+        </h6>
+        <p class="mb-0">
+            Use as informações abaixo como referência ao criar ou editar usuários. 
+            Selecione o perfil adequado baseado no nível de acesso necessário, 
+            a unidade correspondente ao departamento e o setor específico de trabalho.
+        </p>
+    </div>
+    
+    <div class="row">
+        <!-- Perfis -->
+        <div class="col-lg-4 mb-4">
+            <div class="org-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="bi bi-person-gear"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Perfis/Cargos</h5>
+                        <small class="text-muted">Níveis de acesso e responsabilidades</small>
+                    </div>
+                </div>
+                
+                {% for perfil in perfis %}
+                    <div class="item-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="item-title">{{ perfil.nome }}</div>
+                            <span class="badge-nivel">Nível {{ perfil.nivel_acesso }}</span>
+                        </div>
+                        {% if perfil.descricao %}
+                            <div class="item-description">{{ perfil.descricao }}</div>
+                        {% endif %}
+                        <div class="item-subtitle mt-2">
+                            <i class="bi bi-calendar me-1"></i>
+                            Criado em {{ perfil.created_at|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <p>Nenhum perfil cadastrado</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Unidades -->
+        <div class="col-lg-4 mb-4">
+            <div class="org-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Unidades/Departamentos</h5>
+                        <small class="text-muted">Divisões organizacionais</small>
+                    </div>
+                </div>
+                
+                {% for unidade in unidades %}
+                    <div class="item-card">
+                        <div class="item-title">{{ unidade.nome }}</div>
+                        <div class="item-subtitle">
+                            <i class="bi bi-hash me-1"></i>
+                            Código: {{ unidade.codigo }}
+                        </div>
+                        {% if unidade.responsavel %}
+                            <div class="item-subtitle">
+                                <i class="bi bi-person-check me-1"></i>
+                                Responsável: {{ unidade.responsavel }}
+                            </div>
+                        {% endif %}
+                        {% if unidade.descricao %}
+                            <div class="item-description">{{ unidade.descricao }}</div>
+                        {% endif %}
+                        <div class="item-subtitle mt-2">
+                            <i class="bi bi-calendar me-1"></i>
+                            Criado em {{ unidade.created_at|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <p>Nenhuma unidade cadastrada</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Setores -->
+        <div class="col-lg-4 mb-4">
+            <div class="org-card">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="bi bi-gear-wide-connected"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Setores</h5>
+                        <small class="text-muted">Áreas específicas de trabalho</small>
+                    </div>
+                </div>
+                
+                {% for setor in setores %}
+                    <div class="item-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="item-title">{{ setor.get_nome_display }}</div>
+                            <span class="badge-setor">{{ setor.codigo }}</span>
+                        </div>
+                        {% if setor.unidade %}
+                            <div class="item-subtitle">
+                                <i class="bi bi-building me-1"></i>
+                                Unidade: {{ setor.unidade.nome }}
+                            </div>
+                        {% endif %}
+                        {% if setor.responsavel %}
+                            <div class="item-subtitle">
+                                <i class="bi bi-person-check me-1"></i>
+                                Responsável: {{ setor.responsavel }}
+                            </div>
+                        {% endif %}
+                        {% if setor.descricao %}
+                            <div class="item-description">{{ setor.descricao }}</div>
+                        {% endif %}
+                        <div class="item-subtitle mt-2">
+                            <i class="bi bi-calendar me-1"></i>
+                            Criado em {{ setor.created_at|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <p>Nenhum setor cadastrado</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="org-card text-center">
+                <h5 class="mb-3">
+                    <i class="bi bi-gear me-2"></i>
+                    Ações Administrativas
+                </h5>
+                
+                <div class="d-flex flex-wrap justify-content-center gap-3">
+                    {% if user.is_staff %}
+                        <a href="/admin/authentication/perfil/" class="btn btn-outline-primary">
+                            <i class="bi bi-person-gear me-2"></i>
+                            Gerenciar Perfis
+                        </a>
+                        
+                        <a href="/admin/authentication/unidade/" class="btn btn-outline-success">
+                            <i class="bi bi-building me-2"></i>
+                            Gerenciar Unidades
+                        </a>
+                        
+                        <a href="/admin/authentication/setor/" class="btn btn-outline-warning">
+                            <i class="bi bi-gear-wide-connected me-2"></i>
+                            Gerenciar Setores
+                        </a>
+                        
+                        <a href="/admin/authentication/user/" class="btn btn-outline-info">
+                            <i class="bi bi-people me-2"></i>
+                            Gerenciar Usuários
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'core:profile' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Voltar ao Perfil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Estrutura organizacional carregada');
+    
+    // Animação de entrada dos cards
+    const cards = document.querySelectorAll('.item-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+    
+    // Vibração tátil nos botões mobile
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+        });
+    });
+    
+    // Estatísticas animadas
+    const statsNumbers = document.querySelectorAll('.stats-number');
+    statsNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        let currentValue = 0;
+        const increment = Math.ceil(finalValue / 20);
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                currentValue = finalValue;
+                clearInterval(timer);
+            }
+            stat.textContent = currentValue;
+        }, 50);
+    });
+});
+</script>
+{% endblock %}

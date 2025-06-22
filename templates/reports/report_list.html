@@ -1,0 +1,643 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Relatórios - Sistema de Relatórios{% endblock %}
+
+{% block content %}
+<!-- Header Desktop -->
+<div class="d-flex justify-content-between align-items-center mb-4 d-none d-md-flex">
+    <h2><i class="bi bi-file-earmark-text me-2"></i>Relatórios</h2>
+    <div class="btn-group" role="group">
+        <a href="{% url 'reports:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo Relatório
+        </a>
+        <a href="{% url 'reports:bulk_create' %}" class="btn btn-outline-primary">
+            <i class="bi bi-files me-1"></i>Criar em Lote
+        </a>
+    </div>
+</div>
+
+<!-- Header Mobile -->
+<div class="d-md-none mb-4">
+    <h2 class="text-center"><i class="bi bi-file-earmark-text me-2"></i>Relatórios</h2>
+    <!-- Espaçamento para navbar mobile -->
+    <div style="height: 80px;"></div>
+</div>
+
+<!-- Estatísticas Rápidas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary">{{ total_reports }}</h5>
+                <p class="card-text small text-muted">Total de Relatórios</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-warning">{{ status_stats.pendente }}</h5>
+                <p class="card-text small text-muted">Pendentes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info">{{ status_stats.em_andamento }}</h5>
+                <p class="card-text small text-muted">Em Andamento</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">{{ status_stats.resolvido }}</h5>
+                <p class="card-text small text-muted">Resolvidos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros Avançados -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="bi bi-funnel me-2"></i>Filtros
+                {% if filtered_count != total_reports %}
+                    <span class="badge bg-primary">{{ filtered_count }} resultados</span>
+                {% endif %}
+            </h6>
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-secondary" id="toggleFilters">
+                    <i class="bi bi-chevron-down" id="filterIcon"></i>
+                </button>
+                {% if current_filters.status or current_filters.search or current_filters.periodo %}
+                <a href="{% url 'reports:list' %}" class="btn btn-outline-danger" title="Limpar filtros">
+                    <i class="bi bi-x"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-body" id="filterPanel" style="display: none;">
+        <form method="get" id="filterForm">
+            <!-- Linha 1: Filtros básicos -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-2">
+                    <label for="{{ filter_form.status.id_for_label }}" class="form-label">{{ filter_form.status.label }}</label>
+                    {{ filter_form.status }}
+                </div>
+                <div class="col-md-2">
+                    <label for="{{ filter_form.prioridade.id_for_label }}" class="form-label">{{ filter_form.prioridade.label }}</label>
+                    {{ filter_form.prioridade }}
+                </div>
+                <div class="col-md-2">
+                    <label for="{{ filter_form.local.id_for_label }}" class="form-label">{{ filter_form.local.label }}</label>
+                    {{ filter_form.local }}
+                </div>
+                <div class="col-md-2">
+                    <label for="{{ filter_form.equipamento.id_for_label }}" class="form-label">{{ filter_form.equipamento.label }}</label>
+                    {{ filter_form.equipamento }}
+                </div>
+                <div class="col-md-4">
+                    <label for="{{ filter_form.search.id_for_label }}" class="form-label">{{ filter_form.search.label }}</label>
+                    {{ filter_form.search }}
+                </div>
+            </div>
+            
+            <!-- Linha 2: Filtros por data -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label for="{{ filter_form.periodo.id_for_label }}" class="form-label">{{ filter_form.periodo.label }}</label>
+                    {{ filter_form.periodo }}
+                </div>
+                <div class="col-md-2">
+                    <label for="{{ filter_form.data_inicio.id_for_label }}" class="form-label">{{ filter_form.data_inicio.label }}</label>
+                    {{ filter_form.data_inicio }}
+                </div>
+                <div class="col-md-2">
+                    <label for="{{ filter_form.data_fim.id_for_label }}" class="form-label">{{ filter_form.data_fim.label }}</label>
+                    {{ filter_form.data_fim }}
+                </div>
+                <div class="col-md-2">
+                    <label for="{{ filter_form.usuario.id_for_label }}" class="form-label">{{ filter_form.usuario.label }}</label>
+                    {{ filter_form.usuario }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ filter_form.ordenar_por.id_for_label }}" class="form-label">{{ filter_form.ordenar_por.label }}</label>
+                    {{ filter_form.ordenar_por }}
+                </div>
+            </div>
+            
+            <!-- Botões de ação -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>Filtrar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearFilters()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Limpar
+                            </button>
+                        </div>
+                        <div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Use filtros para encontrar relatórios específicos
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Relatórios -->
+{% if page_obj %}
+    <div class="row">
+        {% for report in page_obj %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <!-- Imagem Principal -->
+                    {% if report.imagem_principal %}
+                        <div class="position-relative">
+                            <img src="{{ report.imagem_principal.url }}" 
+                                 alt="{{ report.titulo }}" 
+                                 class="card-img-top" 
+                                 style="height: 200px; object-fit: cover;">
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <span class="badge bg-{{ report.get_priority_color }} me-1">{{ report.get_prioridade_display }}</span>
+                                <span class="badge bg-{% if report.status == 'pendente' %}warning{% elif report.status == 'em_andamento' %}info{% else %}success{% endif %}">
+                                    {{ report.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge bg-{{ report.get_priority_color }}">{{ report.get_prioridade_display }}</span>
+                            <span class="badge bg-{% if report.status == 'pendente' %}warning{% elif report.status == 'em_andamento' %}info{% else %}success{% endif %}">
+                                {{ report.get_status_display }}
+                            </span>
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ report.titulo }}</h5>
+                        <p class="card-text">{{ report.descricao|truncatewords:15 }}</p>
+                        
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    <i class="bi bi-geo-alt me-1"></i>{{ report.local.nome|default:"Local não informado" }}
+                                </small>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    <i class="bi bi-gear me-1"></i>{{ report.equipamento.nome|default:"Equipamento não informado" }}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-{{ report.get_progress_color }}" 
+                                 role="progressbar" style="width: {{ report.progresso }}%">
+                                {{ report.progresso }}%
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>{{ report.data_ocorrencia|date:"d/m/Y H:i" }}
+                            </small>
+                            {% if report.imagens.exists %}
+                                <small class="text-muted">
+                                    <i class="bi bi-images me-1"></i>+{{ report.imagens.count }} foto{{ report.imagens.count|pluralize }}
+                                </small>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex align-items-center mt-2">
+                            {% if report.usuario.foto_perfil %}
+                                <img src="{{ report.usuario.foto_perfil.url }}" 
+                                     alt="{{ report.usuario.get_full_name|default:report.usuario.username }}"
+                                     class="rounded-circle me-2" 
+                                     style="width: 24px; height: 24px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 24px; height: 24px; font-size: 12px; color: white;">
+                                    {{ report.usuario.get_full_name.0|default:report.usuario.username.0|upper }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">
+                                {{ report.usuario.get_full_name|default:report.usuario.username }}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'reports:detail' report.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i>Ver
+                            </a>
+                            <div class="btn-group" role="group">
+                                {% if report.editavel and report.usuario == request.user or request.user.is_staff %}
+                                    <a href="{% url 'reports:edit' report.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil me-1"></i>Editar
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'reports:duplicate' report.pk %}" class="btn btn-sm btn-outline-info" title="Duplicar relatório">
+                                    <i class="bi bi-copy"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Controles de Paginação -->
+    {% if page_obj.has_other_pages %}
+        <div class="row align-items-center mb-3">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    <span class="me-3 text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }} resultados
+                    </span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="?per_page=6{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                           class="btn {% if items_per_page == 6 %}btn-primary{% else %}btn-outline-secondary{% endif %}">6</a>
+                        <a href="?per_page=12{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                           class="btn {% if items_per_page == 12 %}btn-primary{% else %}btn-outline-secondary{% endif %}">12</a>
+                        <a href="?per_page=24{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                           class="btn {% if items_per_page == 24 %}btn-primary{% else %}btn-outline-secondary{% endif %}">24</a>
+                        <a href="?per_page=48{% if filter_params %}&{{ filter_params }}{% endif %}" 
+                           class="btn {% if items_per_page == 48 %}btn-primary{% else %}btn-outline-secondary{% endif %}">48</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <nav aria-label="Paginação">
+                    <ul class="pagination justify-content-end mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if filter_params %}&{{ filter_params }}{% endif %}" title="Primeira página">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_params %}&{{ filter_params }}{% endif %}" title="Página anterior">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if filter_params %}&{{ filter_params }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if filter_params %}&{{ filter_params }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_params %}&{{ filter_params }}{% endif %}" title="Próxima página">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if filter_params %}&{{ filter_params }}{% endif %}" title="Última página">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-file-earmark-text" style="font-size: 4rem; color: #dee2e6;"></i>
+        <h4 class="mt-3 text-muted">Nenhum relatório encontrado</h4>
+        <p class="text-muted">Crie seu primeiro relatório clicando no botão acima.</p>
+        <a href="{% url 'reports:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Criar Primeiro Relatório
+        </a>
+    </div>
+{% endif %}
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard:index' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-speedometer2 fs-5 d-block"></i>
+                <small>Dashboard</small>
+            </a>
+            
+            <!-- Novo Relatório -->
+            <a href="{% url 'reports:create' %}" class="btn btn-link text-primary p-2 flex-fill text-center">
+                <i class="bi bi-plus-circle fs-5 d-block"></i>
+                <small>Novo</small>
+            </a>
+            
+            <!-- Criar em Lote -->
+            <a href="{% url 'reports:bulk_create' %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-files fs-5 d-block"></i>
+                <small>Em Lote</small>
+            </a>
+            
+            <!-- Filtros -->
+            <button type="button" class="btn btn-link text-warning p-2 flex-fill text-center" id="toggleFiltersMobile">
+                <i class="bi bi-funnel fs-5 d-block"></i>
+                <small>Filtros</small>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle de filtros
+    const toggleFilters = document.getElementById('toggleFilters');
+    const filterPanel = document.getElementById('filterPanel');
+    const filterIcon = document.getElementById('filterIcon');
+    
+    // Verificar se há filtros ativos para mostrar painel
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasActiveFilters = urlParams.has('status') || urlParams.has('search') || 
+                            urlParams.has('periodo') || urlParams.has('data_inicio') || 
+                            urlParams.has('data_fim') || urlParams.has('local') || 
+                            urlParams.has('equipamento') || urlParams.has('usuario');
+    
+    if (hasActiveFilters) {
+        filterPanel.style.display = 'block';
+        filterIcon.className = 'bi bi-chevron-up';
+    }
+    
+    toggleFilters.addEventListener('click', function() {
+        if (filterPanel.style.display === 'none') {
+            filterPanel.style.display = 'block';
+            filterIcon.className = 'bi bi-chevron-up';
+        } else {
+            filterPanel.style.display = 'none';
+            filterIcon.className = 'bi bi-chevron-down';
+        }
+    });
+    
+    // Lógica do período predefinido
+    const periodoSelect = document.getElementById('id_periodo');
+    const dataInicio = document.getElementById('id_data_inicio');
+    const dataFim = document.getElementById('id_data_fim');
+    
+    if (periodoSelect) {
+        periodoSelect.addEventListener('change', function() {
+            if (this.value) {
+                // Se selecionou um período predefinido, limpar campos de data manual
+                dataInicio.value = '';
+                dataFim.value = '';
+            }
+        });
+    }
+    
+    // Se alterar datas manuais, limpar período predefinido
+    if (dataInicio && dataFim) {
+        [dataInicio, dataFim].forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value && periodoSelect) {
+                    periodoSelect.value = '';
+                }
+            });
+        });
+    }
+    
+    // Auto-submit do formulário quando mudar ordenação
+    const ordenarPor = document.getElementById('id_ordenar_por');
+    if (ordenarPor) {
+        ordenarPor.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    }
+    
+    // Funcionalidade mobile
+    // Botão voltar ao topo
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.style.display = 'none';
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Botão filtros mobile
+    const toggleFiltersMobile = document.getElementById('toggleFiltersMobile');
+    if (toggleFiltersMobile) {
+        toggleFiltersMobile.addEventListener('click', function() {
+            // Usar a mesma funcionalidade do botão desktop
+            const toggleFilters = document.getElementById('toggleFilters');
+            if (toggleFilters) {
+                toggleFilters.click();
+            }
+            
+            // Scroll para os filtros
+            const filterPanel = document.getElementById('filterPanel');
+            if (filterPanel && filterPanel.style.display !== 'none') {
+                filterPanel.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+    
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+});
+
+// Função para limpar filtros
+function clearFilters() {
+    // Limpar todos os campos do formulário
+    const form = document.getElementById('filterForm');
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+            input.checked = false;
+        } else {
+            input.value = '';
+        }
+    });
+    
+    // Redirecionar para página sem filtros
+    window.location.href = '{% url "reports:list" %}';
+}
+
+// Função para aplicar filtros rápidos
+function quickFilter(type, value) {
+    const url = new URL(window.location);
+    url.searchParams.set(type, value);
+    url.searchParams.delete('page'); // Reset para primeira página
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card-img-overlay-badges {
+    background: linear-gradient(45deg, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+    border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.card-img-top {
+    transition: transform 0.3s ease;
+}
+
+.card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.badge {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Navbar Mobile Fixa */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Botão Voltar ao Topo */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1020;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.back-to-top i {
+    font-size: 1.2rem;
+}
+
+.back-to-top.show {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+</style>
+{% endblock %} 

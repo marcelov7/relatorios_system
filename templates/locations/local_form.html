@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Sistema de Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Navbar Mobile Fixa */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Botão Voltar ao Topo */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1020;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.back-to-top i {
+    font-size: 1.2rem;
+}
+
+.back-to-top.show {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-building me-2"></i>{{ title }}
+                </h1>
+                <!-- Botões Desktop -->
+                <div class="btn-toolbar mb-2 mb-md-0 d-none d-md-block">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'locations:local_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Voltar à Lista
+                        </a>
+                        {% if local %}
+                        <a href="{% url 'locations:local_detail' local.pk %}" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye me-1"></i>Ver Local
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário -->
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-form me-2"></i>Informações do Local
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate id="localForm">
+                        {% csrf_token %}
+                        
+                        <!-- Informações Básicas -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>Informações Básicas
+                                </h6>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.nome.id_for_label }}" class="form-label">
+                                        {{ form.nome.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.nome }}
+                                    {% if form.nome.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.nome.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.codigo.id_for_label }}" class="form-label">
+                                        {{ form.codigo.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.codigo }}
+                                    {% if form.codigo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codigo.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.tipo.id_for_label }}" class="form-label">
+                                        {{ form.tipo.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.tipo }}
+                                    {% if form.tipo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.tipo.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        {{ form.status.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.status.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Localização -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">
+                                    <i class="bi bi-geo-alt me-2"></i>Localização
+                                </h6>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.endereco.id_for_label }}" class="form-label">
+                                        {{ form.endereco.label }}
+                                    </label>
+                                    {{ form.endereco }}
+                                    {% if form.endereco.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.endereco.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botões Desktop -->
+                        <div class="row d-none d-md-flex">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <a href="{% url 'locations:local_list' %}" class="btn btn-secondary">
+                                            <i class="bi bi-x-circle me-2"></i>Cancelar
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            {% if local %}Atualizar Local{% else %}Criar Local{% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Espaçamento para navbar mobile -->
+                        <div class="d-md-none" style="height: 80px;"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Voltar -->
+            <a href="{% url 'locations:local_list' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-arrow-left fs-5 d-block"></i>
+                <small>Voltar</small>
+            </a>
+            
+            {% if local %}
+            <!-- Ver Local -->
+            <a href="{% url 'locations:local_detail' local.pk %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-eye fs-5 d-block"></i>
+                <small>Ver</small>
+            </a>
+            {% endif %}
+            
+            <!-- Salvar -->
+            <button type="button" class="btn btn-link text-success p-2 flex-fill text-center" id="submitBtnMobile">
+                <i class="bi bi-check-circle fs-5 d-block"></i>
+                <small>{% if local %}Atualizar{% else %}Criar{% endif %}</small>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Botão voltar ao topo
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.style.display = 'none';
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Submissão via navbar mobile
+    const submitBtnMobile = document.getElementById('submitBtnMobile');
+    if (submitBtnMobile) {
+        submitBtnMobile.addEventListener('click', function() {
+            document.getElementById('localForm').submit();
+        });
+    }
+    
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

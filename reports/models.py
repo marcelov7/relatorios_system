@@ -1,13 +1,169 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-import uuid
 
 User = get_user_model()
 
+# Importar os modelos de locations
+try:
+    from locations.models import Local, Equipamento
+except ImportError:
+    # Em caso de problemas de importação circular
+    Local = None
+    Equipamento = None
 
+
+class Report(models.Model):
+    """Modelo de relatórios baseado na estrutura de banco desejada"""
+    
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('em_andamento', 'Em Andamento'),
+        ('resolvido', 'Resolvido'),
+    ]
+    
+    PRIORIDADE_CHOICES = [
+        ('baixa', 'Baixa'),
+        ('media', 'Média'),
+        ('alta', 'Alta'),
+        ('critica', 'Crítica'),
+    ]
+    
+    # Campos baseados na estrutura mostrada
+    id = models.AutoField(primary_key=True)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Autor', db_column='usuario_id', related_name='reports')
+    atribuido_para = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name='Atribuído Para',
+        related_name='reports_atribuidos',
+        help_text='Usuário responsável por executar este relatório'
+    )
+    local = models.ForeignKey('locations.Local', on_delete=models.CASCADE, verbose_name='Local', related_name='reports', null=True, blank=True)
+    equipamento = models.ForeignKey('locations.Equipamento', on_delete=models.CASCADE, verbose_name='Equipamento', related_name='reports', null=True, blank=True)
+    data_ocorrencia = models.DateTimeField(verbose_name='Data da Ocorrência')
+    titulo = models.CharField(max_length=200, verbose_name='Título')
+    descricao = models.TextField(verbose_name='Descrição')
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='pendente', 
+        verbose_name='Status'
+    )
+    prioridade = models.CharField(
+        max_length=20, 
+        choices=PRIORIDADE_CHOICES, 
+        default='media', 
+        verbose_name='Prioridade'
+    )
+    progresso = models.IntegerField(default=0, verbose_name='Progresso (%)')
+    editavel = models.BooleanField(default=True, verbose_name='Editável')
+    # Campo para upload de imagem principal
+    imagem_principal = models.ImageField(
+        upload_to='reports/images/', 
+        null=True, 
+        blank=True, 
+        verbose_name='Imagem Principal'
+    )
+    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name='Data de Criação')
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name='Data de Atualização')
+    tenant_id = models.IntegerField(default=1, verbose_name='Tenant ID')
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name='Deletado em')
+
+    class Meta:
+        verbose_name = 'Relatório'
+        verbose_name_plural = 'Relatórios'
+        ordering = ['-data_criacao']
+        db_table = 'reports_report'
+
+    def __str__(self):
+        return self.titulo
+
+    def get_absolute_url(self):
+        return reverse('reports:detail', kwargs={'pk': self.pk})
+
+    @property
+    def author(self):
+        """Propriedade para compatibilidade com código existente"""
+        return self.usuario
+
+    def is_completed(self):
+        """Verifica se o relatório está concluído"""
+        return self.status == 'resolvido'
+
+    def get_progress_color(self):
+        """Retorna cor baseada no progresso"""
+        if self.progresso < 25:
+            return 'danger'
+        elif self.progresso < 50:
+            return 'warning'
+        elif self.progresso < 75:
+            return 'info'
+        else:
+            return 'success'
+
+    def get_priority_color(self):
+        """Retorna cor baseada na prioridade"""
+        colors = {
+            'baixa': 'success',
+            'media': 'warning',
+            'alta': 'danger',
+            'critica': 'dark'
+        }
+        return colors.get(self.prioridade, 'secondary')
+    
+    def pode_editar(self, user):
+        """Verifica se o usuário pode editar o relatório"""
+        return user == self.usuario or user.is_staff
+    
+    def pode_atualizar_status(self, user):
+        """Verifica se o usuário pode atualizar o status/progresso"""
+        # Autor sempre pode
+        if user == self.usuario:
+            return True
+        # Usuário atribuído pode se o status não for resolvido
+        if user == self.atribuido_para and self.status != 'resolvido':
+            return True
+        # Staff sempre pode
+        if user.is_staff:
+            return True
+        return False
+    
+    def get_responsavel_atual(self):
+        """Retorna o usuário responsável atual (atribuído ou autor)"""
+        return self.atribuido_para or self.usuario
+    
+    def get_ultima_atualizacao(self):
+        """Retorna a última atualização do relatório"""
+        return self.atualizacoes.first()
+    
+    def get_total_atualizacoes(self):
+        """Retorna o total de atualizações"""
+        return self.atualizacoes.count()
+
+
+class ReportImage(models.Model):
+    """Modelo para múltiplas imagens anexadas ao relatório"""
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='imagens', verbose_name='Relatório')
+    imagem = models.ImageField(upload_to='reports/anexos/', verbose_name='Imagem')
+    descricao = models.CharField(max_length=200, blank=True, verbose_name='Descrição da Imagem')
+    data_upload = models.DateTimeField(auto_now_add=True, verbose_name='Data do Upload')
+    ordem = models.PositiveIntegerField(default=0, verbose_name='Ordem de Exibição')
+
+    class Meta:
+        verbose_name = 'Imagem do Relatório'
+        verbose_name_plural = 'Imagens dos Relatórios'
+        ordering = ['ordem', 'data_upload']
+
+    def __str__(self):
+        return f"{self.report.titulo} - Imagem {self.id}"
+
+
+# Modelo simplificado para categorias (opcional)
 class ReportCategory(models.Model):
-    """Categoria de relatórios"""
+    """Categoria de relatórios - modelo simplificado"""
     name = models.CharField(max_length=100, verbose_name='Nome')
     description = models.TextField(blank=True, verbose_name='Descrição')
     color = models.CharField(max_length=7, default='#007bff', verbose_name='Cor')
@@ -20,50 +176,6 @@ class ReportCategory(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class Report(models.Model):
-    """Modelo principal de relatórios"""
-    STATUS_CHOICES = [
-        ('draft', 'Rascunho'),
-        ('processing', 'Processando'),
-        ('completed', 'Concluído'),
-        ('failed', 'Falhou'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=200, verbose_name='Título')
-    description = models.TextField(blank=True, verbose_name='Descrição')
-    category = models.ForeignKey(ReportCategory, on_delete=models.CASCADE, verbose_name='Categoria')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Autor')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name='Status')
-    
-    # Datas
-    start_date = models.DateField(verbose_name='Data Inicial')
-    end_date = models.DateField(verbose_name='Data Final')
-    
-    # Arquivos
-    pdf_file = models.FileField(upload_to='reports/pdf/', blank=True, null=True, verbose_name='Arquivo PDF')
-    excel_file = models.FileField(upload_to='reports/excel/', blank=True, null=True, verbose_name='Arquivo Excel')
-    
-    # Metadados
-    is_public = models.BooleanField(default=False, verbose_name='Público')
-    views_count = models.PositiveIntegerField(default=0, verbose_name='Visualizações')
-    downloads_count = models.PositiveIntegerField(default=0, verbose_name='Downloads')
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
-
-    class Meta:
-        verbose_name = 'Relatório'
-        verbose_name_plural = 'Relatórios'
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return self.title
-
-    def get_absolute_url(self):
-        return reverse('reports:detail', kwargs={'pk': self.pk})
 
 
 class ReportData(models.Model):
@@ -112,4 +224,76 @@ class ReportSchedule(models.Model):
         verbose_name_plural = 'Agendamentos de Relatórios'
 
     def __str__(self):
-        return f"{self.report.title} - {self.get_frequency_display()}" 
+        return f"{self.report.titulo} - {self.get_frequency_display()}"
+
+
+class ReportUpdate(models.Model):
+    """Histórico de atualizações do relatório"""
+    
+    report = models.ForeignKey(
+        Report, 
+        on_delete=models.CASCADE, 
+        related_name='atualizacoes', 
+        verbose_name='Relatório'
+    )
+    usuario = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        verbose_name='Usuário que Atualizou'
+    )
+    progresso_anterior = models.IntegerField(verbose_name='Progresso Anterior (%)')
+    progresso_novo = models.IntegerField(verbose_name='Novo Progresso (%)')
+    status_anterior = models.CharField(max_length=20, verbose_name='Status Anterior')
+    status_novo = models.CharField(max_length=20, verbose_name='Novo Status')
+    descricao_atualizacao = models.TextField(verbose_name='Descrição da Atualização')
+    data_atualizacao = models.DateTimeField(auto_now_add=True, verbose_name='Data da Atualização')
+    
+    class Meta:
+        verbose_name = 'Atualização de Relatório'
+        verbose_name_plural = 'Atualizações de Relatórios'
+        ordering = ['-data_atualizacao']
+    
+    def __str__(self):
+        return f"{self.report.titulo} - {self.progresso_anterior}% → {self.progresso_novo}%"
+    
+    def get_progresso_diferenca(self):
+        """Retorna a diferença de progresso"""
+        return self.progresso_novo - self.progresso_anterior
+    
+    def get_status_color(self):
+        """Retorna cor baseada no novo status"""
+        colors = {
+            'pendente': 'secondary',
+            'em_andamento': 'warning',
+            'resolvido': 'success'
+        }
+        return colors.get(self.status_novo, 'secondary')
+
+
+class ReportUpdateImage(models.Model):
+    """Imagens anexadas às atualizações do relatório"""
+    
+    update = models.ForeignKey(
+        ReportUpdate, 
+        on_delete=models.CASCADE, 
+        related_name='imagens', 
+        verbose_name='Atualização'
+    )
+    imagem = models.ImageField(
+        upload_to='reports/updates/', 
+        verbose_name='Imagem da Atualização'
+    )
+    descricao = models.CharField(
+        max_length=200, 
+        blank=True, 
+        verbose_name='Descrição da Imagem'
+    )
+    data_upload = models.DateTimeField(auto_now_add=True, verbose_name='Data do Upload')
+    
+    class Meta:
+        verbose_name = 'Imagem da Atualização'
+        verbose_name_plural = 'Imagens das Atualizações'
+        ordering = ['data_upload']
+    
+    def __str__(self):
+        return f"Imagem - {self.update.report.titulo}" 

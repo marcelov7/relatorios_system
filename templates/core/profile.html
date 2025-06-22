@@ -1,0 +1,519 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Meu Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin: 0 auto 1rem;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .profile-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: none;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .info-content h6 {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-content p {
+        margin: 0;
+        color: #333;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-profile {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 2rem;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-profile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .mobile-stats {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .profile-header {
+            padding: 1.5rem 0;
+            margin-bottom: 1rem;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+        }
+        
+        .profile-card {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .desktop-stats {
+            display: none;
+        }
+        
+        .mobile-stats {
+            display: block;
+        }
+        
+        .stats-card {
+            padding: 1rem;
+        }
+        
+        .stats-number {
+            font-size: 1.8rem;
+        }
+        
+        .info-item {
+            padding: 0.75rem 0;
+        }
+        
+        .info-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header do Perfil -->
+<div class="profile-header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="profile-avatar">
+                    {% if user.foto_perfil %}
+                        <img src="{{ user.foto_perfil.url }}" alt="Foto de {{ user.get_full_name }}" 
+                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    {% else %}
+                        <i class="bi bi-person-fill"></i>
+                    {% endif %}
+                </div>
+                <h2 class="mb-2">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="mb-0 opacity-75">
+                    <i class="bi bi-envelope me-2"></i>{{ user.email }}
+                </p>
+                {% if user.is_staff %}
+                    <span class="badge bg-light text-dark mt-2">
+                        <i class="bi bi-shield-check me-1"></i>Administrador
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Informações do Usuário -->
+        <div class="col-lg-8 mb-4">
+            <div class="profile-card">
+                <h5 class="mb-4">
+                    <i class="bi bi-person-lines-fill me-2"></i>
+                    Informações Pessoais
+                </h5>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Nome de Usuário</h6>
+                        <p>{{ user.username }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Nome Completo</h6>
+                        <p>{{ user.nome|default:user.get_full_name|default:"Não informado" }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>E-mail</h6>
+                        <p>{{ user.email|default:"Não informado" }}</p>
+                    </div>
+                </div>
+                
+                {% if user.telefone %}
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Telefone</h6>
+                        <p>{{ user.telefone }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-person-gear"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Perfil/Cargo</h6>
+                        <p>{{ user.get_perfil_display }}</p>
+                        {% if user.perfil %}
+                            <small class="text-muted">
+                                Nível de acesso: {{ user.perfil.nivel_acesso }} | 
+                                {{ user.perfil.descricao|default:"Sem descrição" }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Unidade/Departamento</h6>
+                        <p>{{ user.get_unidade_display }}</p>
+                        {% if user.unidade %}
+                            <small class="text-muted">
+                                Código: {{ user.unidade.codigo }} | 
+                                Responsável: {{ user.unidade.responsavel|default:"Não informado" }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-gear-wide-connected"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Setor</h6>
+                        <p>{{ user.get_setor_display }}</p>
+                        {% if user.setor %}
+                            <small class="text-muted">
+                                Código: {{ user.setor.codigo }} | 
+                                {% if user.setor.unidade %}Unidade: {{ user.setor.unidade.nome }} | {% endif %}
+                                Responsável: {{ user.setor.responsavel|default:"Não informado" }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-calendar"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Membro desde</h6>
+                        <p>{{ user.date_joined|date:"d/m/Y" }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Último acesso</h6>
+                        <p>{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-shield"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Tipo de Conta</h6>
+                        <p>
+                            {% if user.is_superuser %}
+                                Super Administrador
+                            {% elif user.is_staff %}
+                                Administrador
+                            {% else %}
+                                Usuário Padrão
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">
+                        <i class="bi bi-toggle-{{ user.ativo|yesno:'on,off' }}"></i>
+                    </div>
+                    <div class="info-content">
+                        <h6>Status da Conta</h6>
+                        <p>
+                            {% if user.ativo %}
+                                <span class="badge bg-success">Ativo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inativo</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ações -->
+            <div class="profile-card">
+                <h5 class="mb-4">
+                    <i class="bi bi-gear me-2"></i>
+                    Ações da Conta
+                </h5>
+                
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'authentication:profile_update' %}" class="btn btn-profile">
+                        <i class="bi bi-pencil me-2"></i>
+                        Editar Perfil
+                    </a>
+                    
+                    <a href="{% url 'password_change' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-key me-2"></i>
+                        Alterar Senha
+                    </a>
+                    
+                    <a href="{% url 'reports:list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-file-text me-2"></i>
+                        Meus Relatórios
+                    </a>
+                    
+                    <a href="{% url 'authentication:estrutura_organizacional' %}" class="btn btn-outline-info">
+                        <i class="bi bi-diagram-3 me-2"></i>
+                        Estrutura Organizacional
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estatísticas -->
+        <div class="col-lg-4">
+            <!-- Estatísticas Desktop -->
+            <div class="desktop-stats">
+                <div class="stats-card">
+                    <div class="stats-number">{{ user_stats.total_reports|default:0 }}</div>
+                    <div class="stats-label">Relatórios Criados</div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-number">{{ user_stats.reports_resolvidos|default:0 }}</div>
+                    <div class="stats-label">Relatórios Resolvidos</div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-number">{{ user_stats.reports_atribuidos|default:0 }}</div>
+                    <div class="stats-label">Relatórios Atribuídos</div>
+                </div>
+            </div>
+            
+            <!-- Estatísticas Mobile -->
+            <div class="mobile-stats">
+                <div class="row">
+                    <div class="col-4">
+                        <div class="stats-card">
+                            <div class="stats-number">{{ user_stats.total_reports|default:0 }}</div>
+                            <div class="stats-label">Criados</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stats-card">
+                            <div class="stats-number">{{ user_stats.reports_resolvidos|default:0 }}</div>
+                            <div class="stats-label">Resolvidos</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stats-card">
+                            <div class="stats-number">{{ user_stats.reports_atribuidos|default:0 }}</div>
+                            <div class="stats-label">Atribuídos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Atividade Recente -->
+            <div class="profile-card mt-4">
+                <h6 class="mb-3">
+                    <i class="bi bi-activity me-2"></i>
+                    Atividade Recente
+                </h6>
+                
+                {% if recent_reports %}
+                    {% for report in recent_reports %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="bi bi-file-text"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ report.titulo|truncatechars:30 }}</div>
+                                <small class="text-muted">
+                                    {{ report.data_criacao|timesince }} atrás
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        <p>Nenhuma atividade recente</p>
+                    </div>
+                {% endif %}
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'reports:list' %}" class="btn btn-sm btn-outline-primary">
+                        Ver todos os relatórios
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Perfil do usuário carregado');
+    
+    // Adicionar animação aos cards
+    const cards = document.querySelectorAll('.profile-card, .stats-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Vibração tátil nos botões mobile
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

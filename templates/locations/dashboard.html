@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciamento de Locais e Equipamentos - Sistema de Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+.border-left-primary { border-left: 0.25rem solid #4e73df!important; }
+.border-left-success { border-left: 0.25rem solid #1cc88a!important; }
+.border-left-info { border-left: 0.25rem solid #36b9cc!important; }
+.border-left-warning { border-left: 0.25rem solid #f6c23e!important; }
+.icon-circle { 
+    width: 2rem; 
+    height: 2rem; 
+    border-radius: 100%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+/* Navbar Mobile Fixa */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Botão Voltar ao Topo */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1020;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.back-to-top i {
+    font-size: 1.2rem;
+}
+
+.back-to-top.show {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-building me-2"></i>Gerenciamento de Locais e Equipamentos
+                </h1>
+                <!-- Botões Desktop -->
+                <div class="btn-toolbar mb-2 mb-md-0 d-none d-md-block">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'locations:local_create' %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Novo Local
+                        </a>
+                        <a href="{% url 'locations:equipamento_create' %}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-circle me-1"></i>Novo Equipamento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Locais
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_locais }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Locais Ativos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.locais_ativos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total de Equipamentos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_equipamentos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-pc-display fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Em Manutenção
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.equipamentos_manutencao }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-tools fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos e Tabelas -->
+    <div class="row">
+        <!-- Locais com Mais Equipamentos -->
+        <div class="col-xl-6 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-bar-chart me-2"></i>Locais com Mais Equipamentos
+                    </h6>
+                    <a href="{% url 'locations:local_list' %}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if top_locais %}
+                        {% for local in top_locais %}
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="icon-circle bg-primary">
+                                        <i class="bi bi-building text-white"></i>
+                                    </div>
+                                </div>
+                                                                 <div>
+                                     <div class="font-weight-bold">{{ local.nome }}</div>
+                                     <div class="small text-gray-500">{{ local.get_tipo_display }}</div>
+                                 </div>
+                            </div>
+                            <div class="font-weight-bold">{{ local.equipamentos_count }} equipamentos</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-building fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-muted">Nenhum local com equipamentos encontrado</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Equipamentos por Tipo -->
+        <div class="col-xl-6 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-pie-chart me-2"></i>Equipamentos por Tipo
+                    </h6>
+                    <a href="{% url 'locations:equipamento_list' %}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if equipamentos_por_tipo %}
+                        {% for item in equipamentos_por_tipo %}
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="icon-circle bg-success">
+                                        <i class="bi bi-gear text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="small text-gray-500">{{ item.tipo|capfirst }}</div>
+                                </div>
+                            </div>
+                            <div class="font-weight-bold">{{ item.count }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-gear fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-muted">Nenhum equipamento encontrado</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Atividade Recente -->
+    <div class="row">
+        <!-- Locais Recentes -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-clock-history me-2"></i>Locais Adicionados Recentemente
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if locais_recentes %}
+                        {% for local in locais_recentes %}
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <span class="badge bg-{{ local.get_status_color }}">{{ local.get_status_display }}</span>
+                                </div>
+                                                                 <div>
+                                     <div class="font-weight-bold">{{ local.nome }}</div>
+                                     <div class="small text-gray-500">{{ local.get_tipo_display }}</div>
+                                 </div>
+                            </div>
+                            <div class="small text-gray-500">{{ local.data_criacao|date:"d/m/Y" }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">Nenhum local recente</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Equipamentos Recentes -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-clock-history me-2"></i>Equipamentos Adicionados Recentemente
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if equipamentos_recentes %}
+                        {% for equipamento in equipamentos_recentes %}
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <span class="badge bg-{{ equipamento.get_status_color }}">{{ equipamento.get_status_display }}</span>
+                                </div>
+                                <div>
+                                    <div class="font-weight-bold">{{ equipamento.nome }}</div>
+                                    <div class="small text-gray-500">{{ equipamento.local.nome }} - {{ equipamento.get_tipo_display }}</div>
+                                </div>
+                            </div>
+                            <div class="small text-gray-500">{{ equipamento.data_criacao|date:"d/m/Y" }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">Nenhum equipamento recente</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Links Rápidos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-link-45deg me-2"></i>Acesso Rápido
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'locations:local_list' %}" class="btn btn-outline-primary btn-block w-100">
+                                <i class="bi bi-building me-2"></i>Gerenciar Locais
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'locations:equipamento_list' %}" class="btn btn-outline-success btn-block w-100">
+                                <i class="bi bi-pc-display me-2"></i>Gerenciar Equipamentos
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'locations:local_create' %}" class="btn btn-outline-info btn-block w-100">
+                                <i class="bi bi-plus-circle me-2"></i>Adicionar Local
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'locations:equipamento_create' %}" class="btn btn-outline-warning btn-block w-100">
+                                <i class="bi bi-plus-circle me-2"></i>Adicionar Equipamento
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Espaçamento para navbar mobile -->
+<div class="d-md-none" style="height: 80px;"></div>
+
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard:index' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-house fs-5 d-block"></i>
+                <small>Dashboard</small>
+            </a>
+            
+            <!-- Locais -->
+            <a href="{% url 'locations:local_list' %}" class="btn btn-link text-primary p-2 flex-fill text-center">
+                <i class="bi bi-building fs-5 d-block"></i>
+                <small>Locais</small>
+            </a>
+            
+            <!-- Novo Local -->
+            <a href="{% url 'locations:local_create' %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-plus-circle fs-5 d-block"></i>
+                <small>+ Local</small>
+            </a>
+            
+            <!-- Equipamentos -->
+            <a href="{% url 'locations:equipamento_list' %}" class="btn btn-link text-success p-2 flex-fill text-center">
+                <i class="bi bi-gear fs-5 d-block"></i>
+                <small>Equipamentos</small>
+            </a>
+            
+            <!-- Novo Equipamento -->
+            <a href="{% url 'locations:equipamento_create' %}" class="btn btn-link text-warning p-2 flex-fill text-center">
+                <i class="bi bi-plus fs-5 d-block"></i>
+                <small>+ Equip.</small>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Botão voltar ao topo
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.style.display = 'none';
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

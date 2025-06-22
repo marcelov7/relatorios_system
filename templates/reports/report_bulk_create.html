@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sistema de Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+.equipamento-checkbox {
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.equipamento-checkbox:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.equipamento-checkbox.selected {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.form-check-input:checked ~ .equipamento-info {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.alert-info {
+    border-left: 4px solid #0dcaf0;
+}
+
+.btn-select-all {
+    transition: all 0.2s ease;
+}
+
+.equipment-count {
+    transition: all 0.3s ease;
+}
+
+/* Navbar Mobile Fixa */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Botão Voltar ao Topo */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1020;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.back-to-top i {
+    font-size: 1.2rem;
+}
+
+.back-to-top.show {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="alert alert-info mb-4">
+            <h5 class="alert-heading">
+                <i class="bi bi-lightning me-2"></i>Criação em Lote
+            </h5>
+            <p class="mb-2">
+                <i class="bi bi-lightbulb me-1"></i>
+                <strong>Dica:</strong> Crie múltiplos relatórios de uma só vez para equipamentos do mesmo local. 
+                Ideal para manutenções preventivas ou inspeções em lote.
+            </p>
+            <p class="mb-0 small">
+                <i class="bi bi-camera me-1"></i>
+                <strong>📸 Fotos:</strong> Para adicionar fotos específicas, edite cada relatório individualmente após a criação. 
+                O sistema ajustará automaticamente o status baseado nas imagens adicionadas.
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-files me-2"></i>{{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="bulkCreateForm">
+                    {% csrf_token %}
+                    
+                    <!-- Informações Básicas -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Informações Básicas
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="titulo_base" class="form-label">
+                                <i class="bi bi-pencil me-1"></i>Título Base
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="titulo_base" 
+                                   name="titulo_base" 
+                                   placeholder="Ex: Manutenção Preventiva"
+                                   required>
+                            <div class="form-text">
+                                O nome do equipamento será adicionado automaticamente
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="prioridade" class="form-label">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Prioridade
+                            </label>
+                            <select class="form-select" id="prioridade" name="prioridade" required>
+                                <option value="">Selecione a prioridade</option>
+                                <option value="baixa">Baixa</option>
+                                <option value="media">Média</option>
+                                <option value="alta">Alta</option>
+                                <option value="critica">Crítica</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="local" class="form-label">
+                                <i class="bi bi-geo-alt me-1"></i>Local
+                            </label>
+                            <select class="form-select" id="local" name="local" required>
+                                <option value="">Selecione o local</option>
+                                {% for local in locais %}
+                                    <option value="{{ local.id }}">{{ local.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="data_ocorrencia" class="form-label">
+                                <i class="bi bi-calendar-event me-1"></i>Data da Ocorrência
+                            </label>
+                            <input type="datetime-local" 
+                                   class="form-control" 
+                                   id="data_ocorrencia" 
+                                   name="data_ocorrencia" 
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="descricao" class="form-label">
+                                <i class="bi bi-text-paragraph me-1"></i>Descrição
+                            </label>
+                            <textarea class="form-control" 
+                                      id="descricao" 
+                                      name="descricao" 
+                                      rows="3" 
+                                      placeholder="Descreva o tipo de manutenção ou inspeção a ser realizada..."
+                                      required></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Seleção de Equipamentos -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-gear me-2"></i>Equipamentos
+                                    <span id="equipment-count" class="badge bg-primary equipment-count">0 selecionados</span>
+                                </h6>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-select-all" id="selectAll">
+                                        <i class="bi bi-check-all me-1"></i>Selecionar Todos
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="selectNone">
+                                        <i class="bi bi-x me-1"></i>Limpar Seleção
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="equipamentos-container" class="border rounded p-3" style="min-height: 100px; background-color: #f8f9fa;">
+                                <div class="text-center text-muted">
+                                    <i class="bi bi-arrow-up me-1"></i>
+                                    Selecione um local para ver os equipamentos disponíveis
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões Desktop -->
+                    <div class="d-flex justify-content-between d-none d-md-flex">
+                        <div>
+                            <a href="{% url 'reports:list' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Voltar
+                            </a>
+                            <a href="{% url 'reports:create' %}" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-plus me-1"></i>Criar Individual
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="bi bi-files me-1"></i>Criar Relatórios
+                        </button>
+                    </div>
+
+                    <!-- Espaçamento para navbar mobile -->
+                    <div class="d-md-none" style="height: 80px;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Voltar -->
+            <a href="{% url 'reports:list' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-arrow-left fs-5 d-block"></i>
+                <small>Voltar</small>
+            </a>
+            
+            <!-- Criar Individual -->
+            <a href="{% url 'reports:create' %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-plus fs-5 d-block"></i>
+                <small>Individual</small>
+            </a>
+            
+            <!-- Selecionar Todos -->
+            <button type="button" class="btn btn-link text-warning p-2 flex-fill text-center" id="selectAllMobile">
+                <i class="bi bi-check-all fs-5 d-block"></i>
+                <small>Todos</small>
+            </button>
+            
+            <!-- Criar Relatórios -->
+            <button type="button" class="btn btn-link text-success p-2 flex-fill text-center" id="submitBtnMobile" disabled>
+                <i class="bi bi-files fs-5 d-block"></i>
+                <small>Criar</small>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const localSelect = document.getElementById('local');
+    const equipamentosContainer = document.getElementById('equipamentos-container');
+    const equipmentCount = document.getElementById('equipment-count');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitBtnMobile = document.getElementById('submitBtnMobile');
+    const selectAllBtn = document.getElementById('selectAll');
+    const selectAllMobile = document.getElementById('selectAllMobile');
+    const selectNoneBtn = document.getElementById('selectNone');
+    const dataOcorrencia = document.getElementById('data_ocorrencia');
+    
+    // Definir data/hora atual
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    dataOcorrencia.value = now.toISOString().slice(0, 16);
+    
+    // Funcionalidade mobile
+    // Botão voltar ao topo
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.style.display = 'none';
+                backToTopBtn.classList.remove('show');
+            }
+        });
+        
+        backToTopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Sincronizar botões mobile com desktop
+    if (submitBtnMobile) {
+        submitBtnMobile.addEventListener('click', function() {
+            if (!submitBtn.disabled) {
+                document.getElementById('bulkCreateForm').submit();
+            }
+        });
+    }
+    
+    if (selectAllMobile) {
+        selectAllMobile.addEventListener('click', function() {
+            if (selectAllBtn) {
+                selectAllBtn.click();
+            }
+        });
+    }
+    
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+    
+    // Carregar equipamentos quando local for selecionado
+    localSelect.addEventListener('change', function() {
+        const localId = this.value;
+        if (localId) {
+            fetch(`/reports/api/equipamentos-por-local/${localId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    updateEquipamentosContainer(data.equipamentos);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar equipamentos:', error);
+                    equipamentosContainer.innerHTML = `
+                        <div class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Erro ao carregar equipamentos
+                        </div>`;
+                });
+        } else {
+            equipamentosContainer.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="bi bi-arrow-up me-1"></i>
+                    Selecione um local para ver os equipamentos disponíveis
+                </div>`;
+            updateCount();
+        }
+    });
+    
+    function updateEquipamentosContainer(equipamentos) {
+        if (equipamentos.length === 0) {
+            equipamentosContainer.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="bi bi-gear me-1"></i>
+                    Nenhum equipamento encontrado neste local
+                </div>`;
+            updateCount();
+            return;
+        }
+        
+        let html = '<div class="row">';
+        equipamentos.forEach(equipamento => {
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="equipamento-checkbox">
+                        <div class="form-check">
+                            <input class="form-check-input equipamento-input" 
+                                   type="checkbox" 
+                                   value="${equipamento.id}" 
+                                   name="equipamentos" 
+                                   id="equip_${equipamento.id}">
+                            <label class="form-check-label equipamento-info" for="equip_${equipamento.id}">
+                                <div class="fw-bold">${equipamento.nome}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-tag me-1"></i>${equipamento.codigo}
+                                    <br>
+                                    <i class="bi bi-tools me-1"></i>${equipamento.tipo}
+                                </small>
+                            </label>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        html += '</div>';
+        
+        equipamentosContainer.innerHTML = html;
+        
+        // Adicionar event listeners aos checkboxes
+        document.querySelectorAll('.equipamento-input').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateCheckboxStyle(this);
+                updateCount();
+            });
+            
+            // Adicionar click no container
+            const container = checkbox.closest('.equipamento-checkbox');
+            container.addEventListener('click', function(e) {
+                if (e.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    updateCheckboxStyle(checkbox);
+                    updateCount();
+                }
+            });
+        });
+        
+        updateCount();
+    }
+    
+    function updateCheckboxStyle(checkbox) {
+        const container = checkbox.closest('.equipamento-checkbox');
+        if (checkbox.checked) {
+            container.classList.add('selected');
+        } else {
+            container.classList.remove('selected');
+        }
+    }
+    
+    function updateCount() {
+        const checked = document.querySelectorAll('.equipamento-input:checked').length;
+        equipmentCount.textContent = `${checked} selecionados`;
+        
+        if (checked > 0) {
+            equipmentCount.className = 'badge bg-success equipment-count';
+            submitBtn.disabled = false;
+            if (submitBtnMobile) {
+                submitBtnMobile.disabled = false;
+                submitBtnMobile.classList.remove('text-muted');
+                submitBtnMobile.classList.add('text-success');
+            }
+        } else {
+            equipmentCount.className = 'badge bg-secondary equipment-count';
+            submitBtn.disabled = true;
+            if (submitBtnMobile) {
+                submitBtnMobile.disabled = true;
+                submitBtnMobile.classList.remove('text-success');
+                submitBtnMobile.classList.add('text-muted');
+            }
+        }
+    }
+    
+    // Botões de seleção
+    selectAllBtn.addEventListener('click', function() {
+        document.querySelectorAll('.equipamento-input').forEach(checkbox => {
+            checkbox.checked = true;
+            updateCheckboxStyle(checkbox);
+        });
+        updateCount();
+    });
+    
+    selectNoneBtn.addEventListener('click', function() {
+        document.querySelectorAll('.equipamento-input').forEach(checkbox => {
+            checkbox.checked = false;
+            updateCheckboxStyle(checkbox);
+        });
+        updateCount();
+    });
+});
+</script>
+{% endblock %} 

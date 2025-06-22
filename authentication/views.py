@@ -5,11 +5,12 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from .forms import UserRegistrationForm, UserUpdateForm
-from .models import User
+from .models import User, Perfil, Unidade, Setor
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model
 import json
+import os
 
 User = get_user_model()
 
@@ -58,7 +59,15 @@ def register_view(request):
     else:
         form = UserRegistrationForm()
     
-    return render(request, 'authentication/register.html', {'form': form})
+    # Adicionar dados de referência para o template
+    context = {
+        'form': form,
+        'perfis': Perfil.objects.filter(ativo=True),
+        'unidades': Unidade.objects.filter(ativo=True),
+        'setores': Setor.objects.filter(ativo=True),
+    }
+    
+    return render(request, 'authentication/register.html', context)
 
 
 @login_required
@@ -66,14 +75,55 @@ def profile_update_view(request):
     """View para atualizar perfil do usuário"""
     if request.method == 'POST':
         form = UserUpdateForm(request.POST, request.FILES, instance=request.user)
+        
+        # Verificar se deve remover a foto
+        remove_photo = request.POST.get('remove_photo')
+        if remove_photo == 'true' and request.user.foto_perfil:
+            # Deletar arquivo físico
+            if request.user.foto_perfil.path:
+                try:
+                    os.remove(request.user.foto_perfil.path)
+                except OSError:
+                    pass  # Arquivo pode não existir fisicamente
+            
+            # Limpar campo
+            request.user.foto_perfil.delete(save=False)
+            request.user.foto_perfil = None
+        
         if form.is_valid():
-            form.save()
+            user = form.save()
             messages.success(request, 'Perfil atualizado com sucesso!')
             return redirect('core:profile')
+        else:
+            # Adicionar mensagens de erro específicas
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{form.fields[field].label}: {error}')
     else:
         form = UserUpdateForm(instance=request.user)
     
-    return render(request, 'authentication/profile_update.html', {'form': form})
+    # Adicionar dados de referência para o template
+    context = {
+        'form': form,
+        'perfis': Perfil.objects.filter(ativo=True),
+        'unidades': Unidade.objects.filter(ativo=True),
+        'setores': Setor.objects.filter(ativo=True),
+    }
+    
+    return render(request, 'authentication/profile_update.html', context)
+
+
+@login_required
+def estrutura_organizacional(request):
+    """View para mostrar a estrutura organizacional completa"""
+    context = {
+        'perfis': Perfil.objects.filter(ativo=True).order_by('nivel_acesso'),
+        'unidades': Unidade.objects.filter(ativo=True).order_by('nome'),
+        'setores': Setor.objects.filter(ativo=True).order_by('nome'),
+        'total_usuarios': User.objects.filter(ativo=True).count(),
+    }
+    
+    return render(request, 'authentication/estrutura_organizacional.html', context)
 
 
 @csrf_exempt

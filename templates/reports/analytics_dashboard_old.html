@@ -1,0 +1,776 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analytics - Sistema de Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilos para o dashboard de analytics */
+.analytics-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.analytics-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.trend-up {
+    color: #28a745;
+}
+
+.trend-down {
+    color: #dc3545;
+}
+
+.trend-stable {
+    color: #6c757d;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+.priority-badge {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.performance-table {
+    font-size: 0.9rem;
+}
+
+.performance-table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.progress-mini {
+    height: 8px;
+    border-radius: 4px;
+}
+
+/* Navbar Mobile para Analytics */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}
+
+/* Animações */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@2.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="bi bi-graph-up me-2"></i>Analytics Inteligente
+                </h1>
+                
+                <!-- Controles Desktop -->
+                <div class="btn-toolbar mb-2 mb-md-0 d-none d-md-flex">
+                    <div class="btn-group me-2">
+                        <select class="form-select" id="periodSelect">
+                            {% for value, label in period_options %}
+                                <option value="{{ value }}" {% if value == period %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{% url 'reports:list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Voltar
+                        </a>
+                        <button class="btn btn-primary" id="exportBtn">
+                            <i class="bi bi-download me-1"></i>Exportar
+                        </button>
+                        <button class="btn btn-success" id="refreshBtn">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas Principais -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="metric-card fade-in-up" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="metric-value" id="totalReports">
+                    {{ dashboard_data.overview.total_reports }}
+                </div>
+                <div class="metric-label">Total de Relatórios</div>
+                {% if dashboard_data.trends.total_reports %}
+                <div class="trend-indicator trend-{{ dashboard_data.trends.total_reports.tendencia }}">
+                    <i class="bi bi-arrow-{% if dashboard_data.trends.total_reports.tendencia == 'up' %}up{% elif dashboard_data.trends.total_reports.tendencia == 'down' %}down{% else %}right{% endif %} me-1"></i>
+                    {{ dashboard_data.trends.total_reports.variacao }}%
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="metric-card fade-in-up" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="metric-value" id="taxaResolucao">
+                    {{ dashboard_data.overview.taxa_resolucao }}%
+                </div>
+                <div class="metric-label">Taxa de Resolução</div>
+                {% if dashboard_data.trends.resolvidos %}
+                <div class="trend-indicator trend-{{ dashboard_data.trends.resolvidos.tendencia }}">
+                    <i class="bi bi-arrow-{% if dashboard_data.trends.resolvidos.tendencia == 'up' %}up{% elif dashboard_data.trends.resolvidos.tendencia == 'down' %}down{% else %}right{% endif %} me-1"></i>
+                    {{ dashboard_data.trends.resolvidos.variacao }}%
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="metric-card fade-in-up" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="metric-value" id="progressoMedio">
+                    {{ dashboard_data.overview.progresso_medio }}%
+                </div>
+                <div class="metric-label">Progresso Médio</div>
+                <div class="trend-indicator trend-up">
+                    <i class="bi bi-arrow-up me-1"></i>
+                    Crescimento
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6 mb-3">
+            <div class="metric-card fade-in-up" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="metric-value" id="tempoMedio">
+                    {{ dashboard_data.overview.tempo_medio_resolucao }}
+                </div>
+                <div class="metric-label">Tempo Médio (dias)</div>
+                <div class="trend-indicator trend-stable">
+                    <i class="bi bi-arrow-right me-1"></i>
+                    Estável
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos Principais -->
+    <div class="row mb-4">
+        <!-- Timeline de Relatórios -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card analytics-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Timeline de Relatórios
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Distribuição por Prioridade -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card analytics-card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>Por Prioridade
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance por Local -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card analytics-card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>Performance por Local
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table performance-table">
+                            <thead>
+                                <tr>
+                                    <th>Local</th>
+                                    <th>Total</th>
+                                    <th>Resolvidos</th>
+                                    <th>Taxa</th>
+                                    <th>Progresso</th>
+                                    <th>Tempo Médio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for location in dashboard_data.location_performance %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ location.local__nome }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ location.total_reports }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ location.resolvidos }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress progress-mini me-2" style="width: 60px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {{ location.taxa_resolucao }}%"></div>
+                                            </div>
+                                            <small>{{ location.taxa_resolucao }}%</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress progress-mini me-2" style="width: 60px;">
+                                                <div class="progress-bar bg-info" 
+                                                     style="width: {{ location.progresso_medio }}%"></div>
+                                            </div>
+                                            <small>{{ location.progresso_medio }}%</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ location.tempo_medio_dias }} dias</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        Nenhum dado disponível para o período selecionado
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equipamentos com Mais Problemas -->
+    {% if dashboard_data.equipment_issues %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card analytics-card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Equipamentos com Mais Problemas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table performance-table">
+                            <thead>
+                                <tr>
+                                    <th>Equipamento</th>
+                                    <th>Local</th>
+                                    <th>Tipo</th>
+                                    <th>Total Issues</th>
+                                    <th>Resolvidas</th>
+                                    <th>Taxa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for equipment in dashboard_data.equipment_issues|slice:":10" %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ equipment.equipamento__nome }}</strong>
+                                        <br><small class="text-muted">{{ equipment.equipamento__codigo }}</small>
+                                    </td>
+                                    <td>{{ equipment.equipamento__local__nome }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ equipment.equipamento__tipo }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ equipment.total_issues }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ equipment.issues_resolvidas }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress progress-mini me-2" style="width: 60px;">
+                                                <div class="progress-bar 
+                                                    {% if equipment.taxa_resolucao >= 80 %}bg-success
+                                                    {% elif equipment.taxa_resolucao >= 60 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                     style="width: {{ equipment.taxa_resolucao }}%"></div>
+                                            </div>
+                                            <small>{{ equipment.taxa_resolucao }}%</small>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Espaçamento para navbar mobile -->
+    <div class="d-md-none" style="height: 80px;"></div>
+</div>
+
+<!-- Navbar Mobile -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Voltar -->
+            <a href="{% url 'reports:list' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-arrow-left fs-5 d-block"></i>
+                <small>Voltar</small>
+            </a>
+            
+            <!-- Período -->
+            <button type="button" class="btn btn-link text-primary p-2 flex-fill text-center" data-bs-toggle="modal" data-bs-target="#periodModal">
+                <i class="bi bi-calendar fs-5 d-block"></i>
+                <small>Período</small>
+            </button>
+            
+            <!-- Atualizar -->
+            <button type="button" class="btn btn-link text-success p-2 flex-fill text-center" id="refreshBtnMobile">
+                <i class="bi bi-arrow-clockwise fs-5 d-block"></i>
+                <small>Atualizar</small>
+            </button>
+            
+            <!-- Exportar -->
+            <button type="button" class="btn btn-link text-info p-2 flex-fill text-center" id="exportBtnMobile">
+                <i class="bi bi-download fs-5 d-block"></i>
+                <small>Exportar</small>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Modal para seleção de período (mobile) -->
+<div class="modal fade" id="periodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Selecionar Período</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    {% for value, label in period_options %}
+                    <button type="button" class="list-group-item list-group-item-action period-option" 
+                            data-period="{{ value }}" {% if value == period %}active{% endif %}>
+                        {{ label }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dados do dashboard
+const dashboardData = {{ dashboard_data_json|safe }};
+
+// Configuração dos gráficos
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard Data:', dashboardData); // Debug
+    
+    // Verificar se temos dados
+    if (!dashboardData || Object.keys(dashboardData).length === 0) {
+        console.error('Dados do dashboard não carregados');
+        showNoDataMessage();
+        return;
+    }
+    
+    initializeCharts();
+    setupEventListeners();
+});
+
+function showNoDataMessage() {
+    // Mostrar mensagem de "sem dados" nos gráficos
+    const timelineCanvas = document.getElementById('timelineChart');
+    const priorityCanvas = document.getElementById('priorityChart');
+    
+    if (timelineCanvas) {
+        const ctx = timelineCanvas.getContext('2d');
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6c757d';
+        ctx.fillText('Sem dados para exibir', timelineCanvas.width / 2, timelineCanvas.height / 2);
+    }
+    
+    if (priorityCanvas) {
+        const ctx = priorityCanvas.getContext('2d');
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#6c757d';
+        ctx.fillText('Sem dados para exibir', priorityCanvas.width / 2, priorityCanvas.height / 2);
+    }
+}
+
+function initializeCharts() {
+    try {
+        // Verificar se temos dados de timeline
+        if (!dashboardData.timeline || dashboardData.timeline.length === 0) {
+            console.warn('Dados de timeline não disponíveis');
+            return;
+        }
+        
+        // Timeline Chart
+        const timelineCtx = document.getElementById('timelineChart');
+        if (timelineCtx) {
+            new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: dashboardData.timeline.map(item => {
+                        // Garantir que a data está no formato correto
+                        const date = new Date(item.periodo);
+                        return date.toLocaleDateString('pt-BR');
+                    }),
+                    datasets: [{
+                        label: 'Criados',
+                        data: dashboardData.timeline.map(item => item.criados || 0),
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Resolvidos',
+                        data: dashboardData.timeline.map(item => item.resolvidos || 0),
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // Priority Chart
+        const priorityCtx = document.getElementById('priorityChart');
+        if (priorityCtx && dashboardData.priority_distribution && dashboardData.priority_distribution.length > 0) {
+            const priorityData = dashboardData.priority_distribution;
+            
+            new Chart(priorityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: priorityData.map(item => {
+                        const priority = item.prioridade || '';
+                        return priority.charAt(0).toUpperCase() + priority.slice(1);
+                    }),
+                    datasets: [{
+                        data: priorityData.map(item => item.count || 0),
+                        backgroundColor: [
+                            '#28a745', // baixa
+                            '#ffc107', // media
+                            '#dc3545', // alta
+                            '#343a40'  // critica
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = priorityData[context.dataIndex];
+                                    return `${context.label}: ${context.parsed} (${item.percentual || 0}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        console.log('Gráficos inicializados com sucesso');
+        
+    } catch (error) {
+        console.error('Erro ao inicializar gráficos:', error);
+        showNoDataMessage();
+    }
+}
+
+function setupEventListeners() {
+    // Seletor de período
+    const periodSelect = document.getElementById('periodSelect');
+    if (periodSelect) {
+        periodSelect.addEventListener('change', function() {
+            updateDashboard(this.value);
+        });
+    }
+
+    // Botões de refresh
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshBtnMobile = document.getElementById('refreshBtnMobile');
+    
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshData);
+    }
+    if (refreshBtnMobile) {
+        refreshBtnMobile.addEventListener('click', refreshData);
+    }
+
+    // Botões de export
+    const exportBtn = document.getElementById('exportBtn');
+    const exportBtnMobile = document.getElementById('exportBtnMobile');
+    
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportData);
+    }
+    if (exportBtnMobile) {
+        exportBtnMobile.addEventListener('click', exportData);
+    }
+
+    // Seleção de período no modal (mobile)
+    document.querySelectorAll('.period-option').forEach(button => {
+        button.addEventListener('click', function() {
+            const period = this.dataset.period;
+            updateDashboard(period);
+            
+            // Fechar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('periodModal'));
+            if (modal) {
+                modal.hide();
+            }
+        });
+    });
+
+    // Efeito de vibração no mobile
+    if ('vibrate' in navigator) {
+        document.querySelectorAll('.mobile-navbar .btn-link').forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50);
+            });
+        });
+    }
+}
+
+function updateDashboard(period) {
+    // Mostrar loading
+    showLoading();
+    
+    // Atualizar URL
+    const url = new URL(window.location);
+    url.searchParams.set('period', period);
+    window.history.pushState({}, '', url);
+    
+    // Recarregar página com novo período
+    window.location.reload();
+}
+
+function refreshData() {
+    showLoading();
+    window.location.reload();
+}
+
+function exportData() {
+    const period = '{{ period }}';
+    const exportUrl = `{% url 'reports:export_analytics' %}?period=${period}&format=json`;
+    window.open(exportUrl, '_blank');
+}
+
+function showLoading() {
+    // Adicionar spinners nos botões
+    document.querySelectorAll('#refreshBtn, #refreshBtnMobile').forEach(btn => {
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.className = 'loading-spinner me-1';
+        }
+    });
+}
+
+// Atualizar métricas em tempo real (opcional)
+function updateMetricsRealtime() {
+    fetch(`{% url 'reports:analytics_api' %}?period={{ period }}&chart=overview`)
+        .then(response => response.json())
+        .then(data => {
+            const totalEl = document.getElementById('totalReports');
+            const taxaEl = document.getElementById('taxaResolucao');
+            const progressoEl = document.getElementById('progressoMedio');
+            const tempoEl = document.getElementById('tempoMedio');
+            
+            if (totalEl) totalEl.textContent = data.total_reports || 0;
+            if (taxaEl) taxaEl.textContent = (data.taxa_resolucao || 0) + '%';
+            if (progressoEl) progressoEl.textContent = (data.progresso_medio || 0) + '%';
+            if (tempoEl) tempoEl.textContent = data.tempo_medio_resolucao || 0;
+        })
+        .catch(error => console.error('Erro ao atualizar métricas:', error));
+}
+
+// Debug: Log dos dados quando a página carrega
+console.log('Analytics Dashboard carregado');
+console.log('Período atual:', '{{ period }}');
+console.log('Dados disponíveis:', dashboardData ? Object.keys(dashboardData) : 'Nenhum');
+
+// Atualizar a cada 5 minutos (opcional)
+// setInterval(updateMetricsRealtime, 300000);
+</script>
+{% endblock %}

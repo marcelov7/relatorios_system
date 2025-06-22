@@ -1,40 +1,481 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load crispy_forms_tags %}
 
-{% block title %}Atualizar Perfil - Sistema de Relatórios{% endblock %}
+{% block title %}Atualizar Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+    .update-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .update-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        border: none;
+    }
+    
+    .photo-preview-container {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .photo-preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid #667eea;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .photo-preview:hover {
+        transform: scale(1.05);
+        border-color: #764ba2;
+    }
+    
+    .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    
+    .photo-preview .placeholder {
+        font-size: 3rem;
+        color: #667eea;
+    }
+    
+    .photo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .photo-preview:hover .photo-overlay {
+        opacity: 1;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .section-title {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #667eea;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-back {
+        border-radius: 25px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+    }
+    
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .file-input-wrapper input[type=file] {
+        position: absolute;
+        left: -9999px;
+    }
+    
+    .file-input-label {
+        background: #667eea;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .file-input-label:hover {
+        background: #764ba2;
+    }
+    
+    @media (max-width: 768px) {
+        .update-header {
+            padding: 1.5rem 0;
+        }
+        
+        .update-card {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+        
+        .photo-preview {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4><i class="fas fa-user-edit"></i> Atualizar Perfil</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        {{ form|crispy }}
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Salvar Alterações
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <hr>
-                    
-                    <div class="text-center">
-                        <a href="{% url 'core:profile' %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Voltar ao Perfil
-                        </a>
-                    </div>
-                </div>
+<!-- Header -->
+<div class="update-header">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h2 class="mb-3">
+                    <i class="bi bi-person-gear me-3"></i>
+                    Atualizar Perfil
+                </h2>
+                <p class="mb-0 opacity-75">
+                    Mantenha suas informações sempre atualizadas
+                </p>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="update-card">
+                <form method="post" enctype="multipart/form-data" id="profileForm">
+                    {% csrf_token %}
+                    
+                    <!-- Preview da Foto -->
+                    <div class="photo-preview-container">
+                        <div class="photo-preview" onclick="document.getElementById('id_foto_perfil').click()">
+                            {% if user.foto_perfil %}
+                                <img src="{{ user.foto_perfil.url }}" alt="Foto atual" id="photoPreview">
+                            {% else %}
+                                <div class="placeholder">
+                                    <i class="bi bi-person-fill" id="photoPlaceholder"></i>
+                                </div>
+                            {% endif %}
+                            <div class="photo-overlay">
+                                <i class="bi bi-camera"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="file-input-wrapper">
+                                {{ form.foto_perfil }}
+                                <label for="id_foto_perfil" class="file-input-label">
+                                    <i class="bi bi-upload me-2"></i>
+                                    {% if user.foto_perfil %}Alterar Foto{% else %}Adicionar Foto{% endif %}
+                                </label>
+                            </div>
+                            {% if user.foto_perfil %}
+                                <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="removePhoto">
+                                    <i class="bi bi-trash"></i> Remover
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Informações Básicas -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            Informações Básicas
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
+                                {{ form.nome }}
+                                {% if form.nome.errors %}
+                                    <div class="text-danger small">{{ form.nome.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.telefone.id_for_label }}" class="form-label">{{ form.telefone.label }}</label>
+                            {{ form.telefone }}
+                            {% if form.telefone.errors %}
+                                <div class="text-danger small">{{ form.telefone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Estrutura Organizacional -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="bi bi-diagram-3"></i>
+                            </div>
+                            Estrutura Organizacional
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.perfil_ref.id_for_label }}" class="form-label">{{ form.perfil_ref.label }}</label>
+                                {{ form.perfil_ref }}
+                                {% if form.perfil_ref.errors %}
+                                    <div class="text-danger small">{{ form.perfil_ref.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.unidade_ref.id_for_label }}" class="form-label">{{ form.unidade_ref.label }}</label>
+                                {{ form.unidade_ref }}
+                                {% if form.unidade_ref.errors %}
+                                    <div class="text-danger small">{{ form.unidade_ref.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.setor_ref.id_for_label }}" class="form-label">{{ form.setor_ref.label }}</label>
+                                {{ form.setor_ref }}
+                                {% if form.setor_ref.errors %}
+                                    <div class="text-danger small">{{ form.setor_ref.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <a href="{% url 'authentication:estrutura_organizacional' %}" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Ver Estrutura Organizacional
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Status da Conta -->
+                    {% if user.is_staff %}
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="bi bi-shield"></i>
+                            </div>
+                            Status da Conta
+                        </div>
+                        
+                        <div class="form-check">
+                            {{ form.ativo }}
+                            <label class="form-check-label" for="{{ form.ativo.id_for_label }}">
+                                {{ form.ativo.label }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Botões de Ação -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-save me-3">
+                            <i class="bi bi-check-lg me-2"></i>
+                            Salvar Alterações
+                        </button>
+                        
+                        <a href="{% url 'core:profile' %}" class="btn btn-secondary btn-back">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('id_foto_perfil');
+    const photoPreview = document.getElementById('photoPreview');
+    const photoPlaceholder = document.getElementById('photoPlaceholder');
+    const removeBtn = document.getElementById('removePhoto');
+    const form = document.getElementById('profileForm');
+    
+    // Preview da foto ao selecionar arquivo
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validar tipo de arquivo
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor, selecione apenas arquivos de imagem.');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Validar tamanho (máximo 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('A imagem deve ter no máximo 5MB.');
+                fileInput.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewContainer = document.querySelector('.photo-preview');
+                previewContainer.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" id="photoPreview">
+                    <div class="photo-overlay">
+                        <i class="bi bi-camera"></i>
+                    </div>
+                `;
+                
+                // Atualizar label do botão
+                document.querySelector('.file-input-label').innerHTML = 
+                    '<i class="bi bi-upload me-2"></i>Alterar Foto';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Remover foto
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            if (confirm('Tem certeza que deseja remover a foto de perfil?')) {
+                // Criar input hidden para indicar remoção
+                const removeInput = document.createElement('input');
+                removeInput.type = 'hidden';
+                removeInput.name = 'remove_photo';
+                removeInput.value = 'true';
+                form.appendChild(removeInput);
+                
+                // Atualizar preview
+                const previewContainer = document.querySelector('.photo-preview');
+                previewContainer.innerHTML = `
+                    <div class="placeholder">
+                        <i class="bi bi-person-fill" id="photoPlaceholder"></i>
+                    </div>
+                    <div class="photo-overlay">
+                        <i class="bi bi-camera"></i>
+                    </div>
+                `;
+                
+                // Esconder botão de remover
+                removeBtn.style.display = 'none';
+                
+                // Atualizar label do botão
+                document.querySelector('.file-input-label').innerHTML = 
+                    '<i class="bi bi-upload me-2"></i>Adicionar Foto';
+            }
+        });
+    }
+    
+    // Validação do formulário
+    form.addEventListener('submit', function(e) {
+        const nome = document.getElementById('id_nome').value.trim();
+        const email = document.getElementById('id_email').value.trim();
+        
+        if (!nome) {
+            alert('O nome é obrigatório.');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!email) {
+            alert('O e-mail é obrigatório.');
+            e.preventDefault();
+            return;
+        }
+        
+        // Validar formato do e-mail
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('Por favor, insira um e-mail válido.');
+            e.preventDefault();
+            return;
+        }
+        
+        // Vibração tátil
+        if ('vibrate' in navigator) {
+            navigator.vibrate(100);
+        }
+    });
+    
+    // Animação de entrada
+    const sections = document.querySelectorAll('.form-section');
+    sections.forEach((section, index) => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            section.style.transition = 'all 0.5s ease';
+            section.style.opacity = '1';
+            section.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+});
+</script>
 {% endblock %} 

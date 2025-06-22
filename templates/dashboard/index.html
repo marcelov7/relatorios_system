@@ -88,7 +88,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 {% if status_stats %}
                                     {% for stat in status_stats %}
-                                        {% if stat.status == 'pending' %}{{ stat.count }}{% endif %}
+                                        {% if stat.status == 'pendente' %}{{ stat.count }}{% endif %}
                                     {% endfor %}
                                 {% else %}0{% endif %}
                             </div>
@@ -125,18 +125,33 @@
                                 <tbody>
                                     {% for report in recent_reports %}
                                     <tr>
-                                        <td>{{ report.title|truncatechars:50 }}</td>
-                                        <td>{{ report.created_by.get_full_name|default:report.created_by.username }}</td>
+                                        <td>{{ report.titulo|truncatechars:50 }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if report.usuario.foto_perfil %}
+                                                    <img src="{{ report.usuario.foto_perfil.url }}" 
+                                                         alt="{{ report.usuario.get_full_name|default:report.usuario.username }}"
+                                                         class="rounded-circle me-2" 
+                                                         style="width: 24px; height: 24px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
+                                                         style="width: 24px; height: 24px; font-size: 10px; color: white;">
+                                                        {{ report.usuario.get_full_name.0|default:report.usuario.username.0|upper }}
+                                                    </div>
+                                                {% endif %}
+                                                <span>{{ report.usuario.get_full_name|default:report.usuario.username }}</span>
+                                            </div>
+                                        </td>
                                         <td>
                                             <span class="badge 
-                                                {% if report.status == 'approved' %}badge-success
-                                                {% elif report.status == 'pending' %}badge-warning  
-                                                {% elif report.status == 'rejected' %}badge-danger
+                                                {% if report.status == 'resolvido' %}badge-success
+                                                {% elif report.status == 'pendente' %}badge-warning  
+                                                {% elif report.status == 'em_andamento' %}badge-info
                                                 {% else %}badge-secondary{% endif %}">
                                                 {{ report.get_status_display }}
                                             </span>
                                         </td>
-                                        <td>{{ report.created_at|date:"d/m/Y" }}</td>
+                                        <td>{{ report.data_criacao|date:"d/m/Y" }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

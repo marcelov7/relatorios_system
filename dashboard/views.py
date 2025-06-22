@@ -17,14 +17,12 @@ def index(request):
     
     # Estatísticas gerais
     total_reports = Report.objects.count()
-    user_reports = Report.objects.filter(created_by=user).count()
+    user_reports = Report.objects.filter(usuario=user).count()
     total_users = User.objects.count()
-    recent_reports = Report.objects.order_by('-created_at')[:5]
+    recent_reports = Report.objects.order_by('-data_criacao')[:5]
     
-    # Estatísticas por categoria
-    categories_stats = ReportCategory.objects.annotate(
-        report_count=Count('reports')
-    ).order_by('-report_count')
+    # Estatísticas por categoria (temporariamente desabilitado)
+    categories_stats = []
     
     # Relatórios por status
     status_stats = Report.objects.values('status').annotate(
@@ -34,12 +32,12 @@ def index(request):
     # Atividade recente (últimos 30 dias)
     thirty_days_ago = datetime.now() - timedelta(days=30)
     recent_activity = Report.objects.filter(
-        created_at__gte=thirty_days_ago
-    ).order_by('-created_at')[:10]
+        data_criacao__gte=thirty_days_ago
+    ).order_by('-data_criacao')[:10]
     
     # Top autores
     top_authors = User.objects.annotate(
-        report_count=Count('created_reports')
+        report_count=Count('reports')
     ).filter(report_count__gt=0).order_by('-report_count')[:5]
     
     context = {
@@ -68,8 +66,8 @@ def analytics(request):
         month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
         
         count = Report.objects.filter(
-            created_at__gte=month_start,
-            created_at__lte=month_end
+            data_criacao__gte=month_start,
+            data_criacao__lte=month_end
         ).count()
         
         reports_by_month.append({
@@ -79,14 +77,12 @@ def analytics(request):
     
     reports_by_month.reverse()
     
-    # Relatórios por categoria
-    category_data = list(ReportCategory.objects.annotate(
-        report_count=Count('reports')
-    ).values('name', 'report_count', 'color'))
+    # Relatórios por categoria (temporariamente desabilitado)
+    category_data = []
     
     # Usuários mais ativos
     active_users = list(User.objects.annotate(
-        report_count=Count('created_reports')
+        report_count=Count('reports')
     ).filter(report_count__gt=0).order_by('-report_count')[:10].values(
         'username', 'first_name', 'last_name', 'report_count'
     ))
@@ -109,10 +105,9 @@ def api_reports_by_status(request):
     
     # Traduzir status para português
     status_translation = {
-        'draft': 'Rascunho',
-        'pending': 'Pendente',
-        'approved': 'Aprovado',
-        'rejected': 'Rejeitado',
+        'pendente': 'Pendente',
+        'em_andamento': 'Em Andamento',
+        'resolvido': 'Resolvido',
     }
     
     for item in data:
@@ -124,9 +119,8 @@ def api_reports_by_status(request):
 @login_required
 def api_reports_by_category(request):
     """API para dados de relatórios por categoria"""
-    data = list(ReportCategory.objects.annotate(
-        report_count=Count('reports')
-    ).values('name', 'report_count', 'color'))
+    # Temporariamente desabilitado
+    data = []
     
     return JsonResponse(data, safe=False)
 
@@ -138,17 +132,16 @@ def api_recent_activity(request):
     start_date = datetime.now() - timedelta(days=days)
     
     reports = Report.objects.filter(
-        created_at__gte=start_date
-    ).select_related('author', 'category').order_by('-created_at')[:20]
+        data_criacao__gte=start_date
+    ).select_related('usuario').order_by('-data_criacao')[:20]
     
     data = []
     for report in reports:
         data.append({
-            'title': report.title,
-            'author': report.created_by.get_full_name(),
-            'category': report.category.name,
+            'title': report.titulo,
+            'author': report.usuario.get_full_name(),
             'status': report.get_status_display(),
-            'created_at': report.created_at.strftime('%d/%m/%Y %H:%M'),
+            'created_at': report.data_criacao.strftime('%d/%m/%Y %H:%M'),
             'url': f'/reports/{report.id}/',
         })
     
@@ -161,26 +154,23 @@ def user_statistics(request):
     user = request.user
     
     # Relatórios do usuário
-    user_reports = Report.objects.filter(created_by=user)
+    user_reports = Report.objects.filter(usuario=user)
     
     # Estatísticas
     stats = {
         'total_reports': user_reports.count(),
-        'draft_reports': user_reports.filter(status='draft').count(),
-        'approved_reports': user_reports.filter(status='approved').count(),
-        'pending_reports': user_reports.filter(status='pending').count(),
-        'rejected_reports': user_reports.filter(status='rejected').count(),
-        'total_views': 0,  # Implementar depois
-        'total_downloads': 0,  # Implementar depois
+        'pendente_reports': user_reports.filter(status='pendente').count(),
+        'em_andamento_reports': user_reports.filter(status='em_andamento').count(),
+        'resolvido_reports': user_reports.filter(status='resolvido').count(),
+        'total_views': 0,  # Campo removido temporariamente
+        'total_downloads': 0,  # Campo removido temporariamente
     }
     
-    # Relatórios por categoria do usuário
-    user_categories = user_reports.values('category__name').annotate(
-        count=Count('id')
-    ).order_by('-count')
+    # Relatórios por categoria do usuário (temporariamente desabilitado)
+    user_categories = []
     
     # Relatórios recentes do usuário
-    recent_user_reports = user_reports.order_by('-created_at')[:10]
+    recent_user_reports = user_reports.order_by('-data_criacao')[:10]
     
     context = {
         'stats': stats,

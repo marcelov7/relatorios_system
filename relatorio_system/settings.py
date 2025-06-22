@@ -34,16 +34,17 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'widget_tweaks',
-    'notifications',
-    'django_extensions',
-    'corsheaders',
+    # 'notifications',
+    # 'django_extensions',
+    # 'corsheaders',
     
     # Local apps
     'core',
     'authentication',
     'reports',
     'dashboard',
-    'notifications_app',
+    'locations',
+    # 'notifications_app',
 ]
 
 MIDDLEWARE = [
@@ -95,18 +96,11 @@ if ENVIRONMENT == 'production' or config('DB_HOST', default='').endswith('.rende
         }
     }
 else:
-    # Configuração para MySQL (XAMPP/Desenvolvimento local)
+    # Configuração para SQLite (Desenvolvimento local - compatibilidade)
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': config('LOCAL_DB_NAME', default='relatorio_system'),
-            'USER': config('LOCAL_DB_USER', default='root'),
-            'PASSWORD': config('LOCAL_DB_PASSWORD', default=''),
-            'HOST': config('LOCAL_DB_HOST', default='localhost'),
-            'PORT': config('LOCAL_DB_PORT', default='3306'),
-            'OPTIONS': {
-                'sql_mode': 'traditional',
-            },
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 

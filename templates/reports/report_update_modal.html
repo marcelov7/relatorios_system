@@ -1,0 +1,338 @@
+<!-- Modal para Atualizar Status do Relatório -->
+<div class="modal-header">
+    <h5 class="modal-title">
+        <i class="bi bi-arrow-up-circle"></i>
+        Atualizar Relatório
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    <!-- Informações do Relatório -->
+    <div class="alert alert-info mb-3">
+        <h6 class="mb-2">
+            <i class="bi bi-file-earmark-text"></i>
+            {{ report.titulo }}
+        </h6>
+        <div class="row">
+            <div class="col-6">
+                <small class="text-muted">Status Atual:</small><br>
+                <span class="badge bg-{{ report.get_status_color }}">
+                    {{ report.get_status_display }}
+                </span>
+            </div>
+            <div class="col-6">
+                <small class="text-muted">Progresso Atual:</small><br>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar bg-{{ report.get_status_color }}" 
+                         role="progressbar" 
+                         style="width: {{ report.progresso }}%">
+                        {{ report.progresso }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Atualização -->
+    <form id="updateForm" method="post" enctype="multipart/form-data" action="{{ action_url }}">
+        {% csrf_token %}
+        
+        <!-- Progresso -->
+        <div class="mb-3">
+            <label for="{{ form.progresso_novo.id_for_label }}" class="form-label">
+                {{ form.progresso_novo.label }}
+                <span class="text-danger">*</span>
+            </label>
+            
+            <div class="row align-items-center">
+                <div class="col-10">
+                    {{ form.progresso_novo }}
+                </div>
+                <div class="col-2">
+                    <span id="progressValue" class="badge bg-primary fs-6">
+                        {{ report.progresso }}%
+                    </span>
+                </div>
+            </div>
+            
+            <div class="form-text">
+                <i class="bi bi-info-circle"></i>
+                O progresso não pode ser menor que o valor atual ({{ report.progresso }}%).
+            </div>
+            
+            {% if form.progresso_novo.errors %}
+                <div class="text-danger small mt-1">
+                    {% for error in form.progresso_novo.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Descrição da Atualização -->
+        <div class="mb-3">
+            <label for="{{ form.descricao_atualizacao.id_for_label }}" class="form-label">
+                {{ form.descricao_atualizacao.label }}
+                <span class="text-danger">*</span>
+            </label>
+            {{ form.descricao_atualizacao }}
+            <div class="form-text">
+                <i class="bi bi-info-circle"></i>
+                Descreva o que foi feito nesta atualização.
+            </div>
+            
+            {% if form.descricao_atualizacao.errors %}
+                <div class="text-danger small mt-1">
+                    {% for error in form.descricao_atualizacao.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Imagens da Atualização -->
+        <div class="mb-3">
+            <label class="form-label">
+                <i class="bi bi-images"></i>
+                Fotos da Atualização (Opcional)
+            </label>
+            
+            {{ image_formset.management_form }}
+            
+            <div id="imageFormset">
+                {% for form in image_formset %}
+                    <div class="row mb-2 image-form">
+                        <div class="col-8">
+                            <label class="form-label small">Imagem {{ forloop.counter }}</label>
+                            {{ form.imagem }}
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small">Descrição</label>
+                            {{ form.descricao }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="form-text">
+                <i class="bi bi-info-circle"></i>
+                Adicione fotos para documentar o progresso da atividade.
+            </div>
+        </div>
+
+        <!-- Status Previsto -->
+        <div class="alert alert-warning" id="statusPreview" style="display: none;">
+            <h6><i class="bi bi-arrow-right"></i> Status após atualização:</h6>
+            <span id="newStatusBadge" class="badge fs-6"></span>
+        </div>
+    </form>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <i class="bi bi-x-circle"></i>
+        Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" id="saveUpdateBtn">
+        <i class="bi bi-check-circle"></i>
+        Salvar Atualização
+    </button>
+</div>
+
+<script>
+console.log('Script do modal carregado');
+
+// Função para inicializar o modal quando ele for mostrado
+function initModalAfterShow() {
+    console.log('=== INICIALIZANDO MODAL ===');
+    
+    // Buscar elementos
+    const progressRange = document.getElementById('id_progresso_novo');
+    const progressValue = document.getElementById('progressValue');
+    const statusPreview = document.getElementById('statusPreview');
+    const newStatusBadge = document.getElementById('newStatusBadge');
+    const saveBtn = document.getElementById('saveUpdateBtn');
+    const form = document.getElementById('updateForm');
+    
+    console.log('Elementos encontrados:');
+    console.log('- progressRange:', progressRange);
+    console.log('- progressValue:', progressValue);
+    console.log('- statusPreview:', statusPreview);
+    console.log('- newStatusBadge:', newStatusBadge);
+    console.log('- saveBtn:', saveBtn);
+    console.log('- form:', form);
+    
+    // Configurar slider IMEDIATAMENTE
+    if (progressRange && progressValue) {
+        console.log('✅ Configurando slider - Valor inicial:', progressRange.value);
+        
+        // Definir valor inicial
+        progressValue.textContent = progressRange.value + '%';
+        
+        // Função para atualizar progresso
+        function updateProgress() {
+            const value = parseInt(progressRange.value);
+            console.log('🎯 SLIDER MOVIDO PARA:', value + '%');
+            
+            // Atualizar badge IMEDIATAMENTE
+            progressValue.textContent = value + '%';
+            progressValue.style.backgroundColor = '#0d6efd';
+            progressValue.style.color = 'white';
+            
+            // Determinar novo status
+            let statusText = '';
+            let statusClass = '';
+            
+            if (value >= 100) {
+                statusText = 'Resolvido';
+                statusClass = 'bg-success';
+            } else if (value > 0) {
+                statusText = 'Em Andamento';
+                statusClass = 'bg-warning';
+            } else {
+                statusText = 'Pendente';
+                statusClass = 'bg-secondary';
+            }
+            
+            // Atualizar preview do status
+            if (newStatusBadge && statusPreview) {
+                newStatusBadge.textContent = statusText;
+                newStatusBadge.className = 'badge fs-6 ' + statusClass;
+                statusPreview.style.display = 'block';
+                console.log('📊 Status atualizado para:', statusText);
+            }
+        }
+        
+        // MÚLTIPLOS EVENTOS para garantir funcionamento
+        progressRange.oninput = updateProgress;
+        progressRange.onchange = updateProgress;
+        progressRange.addEventListener('input', updateProgress);
+        progressRange.addEventListener('change', updateProgress);
+        progressRange.addEventListener('mousemove', updateProgress);
+        
+        console.log('✅ Eventos do slider configurados');
+        
+        // Inicializar IMEDIATAMENTE
+        updateProgress();
+        
+        // Forçar atualização a cada 100ms (temporário para debug)
+        const interval = setInterval(function() {
+            if (progressRange.value !== progressValue.textContent.replace('%', '')) {
+                updateProgress();
+            }
+        }, 100);
+        
+        // Parar o interval após 30 segundos
+        setTimeout(() => clearInterval(interval), 30000);
+        
+    } else {
+        console.error('❌ Slider ou badge não encontrados!');
+        console.log('progressRange existe?', !!progressRange);
+        console.log('progressValue existe?', !!progressValue);
+    }
+    
+    // Configurar botão salvar
+    if (saveBtn && form) {
+        console.log('✅ Configurando botão salvar');
+        
+        // Remover eventos anteriores
+        saveBtn.onclick = null;
+        
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('🔘 BOTÃO SALVAR CLICADO!');
+            
+            // Validar descrição
+            const descricao = form.querySelector('#id_descricao_atualizacao');
+            if (!descricao || !descricao.value.trim()) {
+                alert('A descrição da atualização é obrigatória.');
+                console.log('❌ Validação falhou: descrição vazia');
+                return;
+            }
+            
+            console.log('✅ Validação passou');
+            
+            // Preparar dados
+            const formData = new FormData(form);
+            const actionUrl = form.getAttribute('action');
+            
+            console.log('📤 Enviando para URL:', actionUrl);
+            console.log('📤 Dados do form:', {
+                progresso: formData.get('progresso_novo'),
+                descricao: formData.get('descricao_atualizacao')
+            });
+            
+            // Mostrar loading
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Salvando...';
+            
+            // Enviar requisição
+            fetch(actionUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('📥 Resposta recebida - Status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Erro HTTP: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('📥 Dados da resposta:', data);
+                
+                if (data.success) {
+                    console.log('✅ Sucesso! Fechando modal...');
+                    
+                    // Fechar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('updateModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Recarregar página
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    console.log('❌ Erro do servidor:', data.message);
+                    alert('Erro: ' + (data.message || 'Erro ao salvar atualização'));
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erro na requisição:', error);
+                alert('Erro ao processar solicitação: ' + error.message);
+            })
+            .finally(() => {
+                // Restaurar botão
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Salvar Atualização';
+                console.log('🔄 Botão restaurado');
+            });
+        });
+        
+        console.log('✅ Botão salvar configurado');
+    } else {
+        console.error('❌ Botão salvar ou formulário não encontrados!');
+    }
+    
+    console.log('=== MODAL INICIALIZADO ===');
+}
+
+// Chamar a função após um delay
+setTimeout(initModalAfterShow, 100);
+
+// Também chamar quando o modal for mostrado (evento Bootstrap)
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('updateModal');
+    if (modal) {
+        modal.addEventListener('shown.bs.modal', initModalAfterShow);
+    }
+});
+</script> 

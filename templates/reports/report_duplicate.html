@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sistema de Relatórios{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilo personalizado para o slider de progresso */
+.form-range {
+    height: 8px;
+    background: linear-gradient(to right, #6c757d 0%, #ffc107 1%, #28a745 100%);
+    border-radius: 5px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.form-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0d6efd;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.form-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0d6efd;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Animação suave para mudanças */
+#progress-value {
+    transition: all 0.3s ease;
+}
+
+.form-select {
+    transition: border-color 0.3s ease;
+}
+
+.alert-info {
+    border-left: 4px solid #0dcaf0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Informações do Relatório Original -->
+        <div class="alert alert-info mb-4">
+            <h5 class="alert-heading">
+                <i class="bi bi-info-circle me-2"></i>Duplicando Relatório
+            </h5>
+            <p class="mb-2">
+                <strong>Relatório Original:</strong> {{ original_report.titulo }}
+            </p>
+            <p class="mb-2">
+                <strong>Local:</strong> {{ original_report.local.nome }}
+            </p>
+            <p class="mb-0">
+                <strong>Equipamento Original:</strong> {{ original_report.equipamento.nome }}
+            </p>
+            <hr>
+            <p class="mb-0 small">
+                <i class="bi bi-lightbulb me-1"></i>
+                <strong>Dica:</strong> Selecione um novo equipamento e ajuste as informações conforme necessário. 
+                O progresso será resetado para 0% e o status para "Pendente".
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-copy me-2"></i>{{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                <i class="bi bi-pencil me-1"></i>{{ form.titulo.label }}
+                            </label>
+                            {{ form.titulo }}
+                            {% if form.titulo.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.titulo.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                                <i class="bi bi-text-paragraph me-1"></i>{{ form.descricao.label }}
+                            </label>
+                            {{ form.descricao }}
+                            {% if form.descricao.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.descricao.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.local.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt me-1"></i>{{ form.local.label }}
+                            </label>
+                            {{ form.local }}
+                            {% if form.local.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.local.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.equipamento.id_for_label }}" class="form-label">
+                                <i class="bi bi-gear me-1"></i>{{ form.equipamento.label }}
+                                <span class="badge bg-warning ms-1">Selecione Novo</span>
+                            </label>
+                            {{ form.equipamento }}
+                            {% if form.equipamento.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.equipamento.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.data_ocorrencia.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-event me-1"></i>{{ form.data_ocorrencia.label }}
+                            </label>
+                            {{ form.data_ocorrencia }}
+                            {% if form.data_ocorrencia.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.data_ocorrencia.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.progresso.id_for_label }}" class="form-label">
+                                <i class="bi bi-bar-chart me-1"></i>{{ form.progresso.label }}
+                                <span id="progress-value" class="badge bg-secondary ms-2">0%</span>
+                            </label>
+                            <div class="mb-2">
+                                {{ form.progresso }}
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                            {% if form.progresso.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.progresso.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <i class="bi bi-flag me-1"></i>{{ form.status.label }}
+                                <span class="badge bg-secondary ms-1">Auto</span>
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.status.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.prioridade.id_for_label }}" class="form-label">
+                                <i class="bi bi-exclamation-triangle me-1"></i>{{ form.prioridade.label }}
+                            </label>
+                            {{ form.prioridade }}
+                            {% if form.prioridade.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.prioridade.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.editavel }}
+                                <label class="form-check-label" for="{{ form.editavel.id_for_label }}">
+                                    <i class="bi bi-pencil-square me-1"></i>{{ form.editavel.label }}
+                                </label>
+                            </div>
+                            {% if form.editavel.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.editavel.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Campo de Imagem Principal -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="{{ form.imagem_principal.id_for_label }}" class="form-label">
+                                <i class="bi bi-image me-1"></i>{{ form.imagem_principal.label }}
+                                <span class="badge bg-info ms-1">Opcional</span>
+                            </label>
+                            {{ form.imagem_principal }}
+                            {% if form.imagem_principal.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.imagem_principal.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Formatos aceitos: JPG, PNG, GIF. Tamanho máximo: 5MB
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{% url 'reports:detail' original_report.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Voltar ao Original
+                            </a>
+                            <a href="{% url 'reports:list' %}" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-list me-1"></i>Lista de Relatórios
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-copy me-1"></i>Duplicar Relatório
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/report_form.js' %}"></script>
+<script>
+// Definir data/hora atual como padrão
+document.addEventListener('DOMContentLoaded', function() {
+    setCurrentDateTime();
+});
+</script>
+{% endblock %} 

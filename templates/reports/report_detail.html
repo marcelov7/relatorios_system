@@ -1,0 +1,1069 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ report.titulo }} - Sistema de Relatórios{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-earmark-text me-2"></i>{{ report.titulo }}
+                </h4>
+                <div>
+                    <span class="badge bg-{{ report.get_priority_color }} me-2">{{ report.get_prioridade_display }}</span>
+                    <span class="badge bg-{% if report.status == 'pendente' %}warning{% elif report.status == 'em_andamento' %}info{% else %}success{% endif %}">
+                        {{ report.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6><i class="bi bi-text-paragraph me-1"></i>Descrição</h6>
+                        <p class="text-muted">{{ report.descricao|linebreaks }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-geo-alt me-1"></i>Localização</h6>
+                        <p><strong>Local:</strong> 
+                            {% if report.local %}
+                                {{ report.local.nome }}
+                            {% else %}
+                                <span class="text-muted">Não informado</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Equipamento:</strong> 
+                            {% if report.equipamento %}
+                                {{ report.equipamento.nome }}
+                            {% else %}
+                                <span class="text-muted">Não informado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-calendar-event me-1"></i>Data da Ocorrência</h6>
+                        <p>{{ report.data_ocorrencia|date:"d/m/Y H:i" }}</p>
+                        
+                        <h6><i class="bi bi-bar-chart me-1"></i>Progresso</h6>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-{{ report.get_progress_color }}" 
+                                 role="progressbar" style="width: {{ report.progresso }}%">
+                                {{ report.progresso }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <h6><i class="bi bi-person me-1"></i>Autor</h6>
+                        <div class="d-flex align-items-center">
+                            {% if report.usuario.foto_perfil %}
+                                <img src="{{ report.usuario.foto_perfil.url }}" 
+                                     alt="{{ report.usuario.get_full_name|default:report.usuario.username }}"
+                                     class="rounded-circle me-2" 
+                                     style="width: 32px; height: 32px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 32px; height: 32px; font-size: 14px; color: white;">
+                                    {{ report.usuario.get_full_name.0|default:report.usuario.username.0|upper }}
+                                </div>
+                            {% endif %}
+                            <div>
+                                <p class="mb-0">{{ report.usuario.get_full_name|default:report.usuario.username }}</p>
+                                {% if report.usuario.email %}
+                                    <small class="text-muted">{{ report.usuario.email }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="bi bi-person-check me-1"></i>Atribuído Para</h6>
+                        {% if report.atribuido_para %}
+                            <div class="d-flex align-items-center">
+                                {% if report.atribuido_para.foto_perfil %}
+                                    <img src="{{ report.atribuido_para.foto_perfil.url }}" 
+                                         alt="{{ report.atribuido_para.get_full_name|default:report.atribuido_para.username }}"
+                                         class="rounded-circle me-2" 
+                                         style="width: 32px; height: 32px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-info d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px; font-size: 14px; color: white;">
+                                        {{ report.atribuido_para.get_full_name.0|default:report.atribuido_para.username.0|upper }}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <p class="mb-0">{{ report.atribuido_para.get_full_name|default:report.atribuido_para.username }}</p>
+                                    <span class="badge bg-info">Responsável</span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="d-flex align-items-center">
+                                {% if report.usuario.foto_perfil %}
+                                    <img src="{{ report.usuario.foto_perfil.url }}" 
+                                         alt="{{ report.usuario.get_full_name|default:report.usuario.username }}"
+                                         class="rounded-circle me-2 opacity-75" 
+                                         style="width: 32px; height: 32px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2 opacity-75" 
+                                         style="width: 32px; height: 32px; font-size: 14px; color: white;">
+                                        {{ report.usuario.get_full_name.0|default:report.usuario.username.0|upper }}
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <span class="text-muted">Não atribuído</span>
+                                    <small class="d-block text-muted">(Autor é responsável)</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="bi bi-pencil-square me-1"></i>Editável</h6>
+                        <p>
+                            {% if report.editavel %}
+                                <span class="badge bg-success">Sim</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Não</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Seção de Imagens -->
+                {% if report.imagem_principal or report.imagens.exists %}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6><i class="bi bi-images me-1"></i>Imagens</h6>
+                        
+                        {% if report.imagem_principal %}
+                        <div class="mb-3">
+                            <p class="small text-muted mb-2">Imagem Principal:</p>
+                            <img src="{{ report.imagem_principal.url }}" 
+                                 alt="Imagem principal do relatório" 
+                                 class="img-fluid rounded shadow-sm" 
+                                 style="max-width: 100%; max-height: 400px; cursor: pointer;"
+                                 data-bs-toggle="modal" 
+                                 data-bs-target="#imageModal"
+                                 data-bs-image="{{ report.imagem_principal.url }}"
+                                 data-bs-title="Imagem Principal">
+                        </div>
+                        {% endif %}
+                        
+                        {% if report.imagens.exists %}
+                        <div class="row">
+                            <div class="col-12">
+                                <p class="small text-muted mb-2">Imagens Adicionais:</p>
+                                <div class="row g-2">
+                                    {% for imagem in report.imagens.all %}
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="card">
+                                            <img src="{{ imagem.imagem.url }}" 
+                                                 alt="{{ imagem.descricao|default:'Imagem adicional' }}" 
+                                                 class="card-img-top" 
+                                                 style="height: 150px; object-fit: cover; cursor: pointer;"
+                                                 data-bs-toggle="modal" 
+                                                 data-bs-target="#imageModal"
+                                                 data-bs-image="{{ imagem.imagem.url }}"
+                                                 data-bs-title="{{ imagem.descricao|default:'Imagem adicional' }}">
+                                            {% if imagem.descricao %}
+                                            <div class="card-body p-2">
+                                                <p class="card-text small mb-0">{{ imagem.descricao }}</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botões para Desktop -->
+                <div class="d-flex justify-content-between d-none d-md-flex">
+                    <a href="{% url 'reports:list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Voltar para Lista
+                    </a>
+                    <div>
+                        <!-- Botão de Atualizar Status (apenas para pendente e em_andamento) -->
+                        {% if pode_atualizar_status and report.status != 'resolvido' %}
+                            <button type="button" class="btn btn-warning me-2" id="updateStatusBtn">
+                                <i class="bi bi-arrow-up-circle me-1"></i>Atualizar Status
+                            </button>
+                        {% endif %}
+                        
+                        {% if pode_editar %}
+                            <a href="{% url 'reports:edit' report.pk %}" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-pencil me-1"></i>Editar
+                            </a>
+                            <a href="{% url 'reports:duplicate' report.pk %}" class="btn btn-outline-info me-2">
+                                <i class="bi bi-copy me-1"></i>Duplicar
+                            </a>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash me-1"></i>Excluir
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Espaçamento para navbar mobile -->
+                <div class="d-md-none" style="height: 80px;"></div>
+            </div>
+        </div>
+        
+        <!-- Histórico de Atualizações -->
+        {% if atualizacoes %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Histórico de Atualizações
+                    <span class="badge bg-secondary ms-2">{{ atualizacoes.count }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for atualizacao in atualizacoes %}
+                <div class="update-item border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center">
+                            {% if atualizacao.usuario.foto_perfil %}
+                                <img src="{{ atualizacao.usuario.foto_perfil.url }}" 
+                                     alt="{{ atualizacao.usuario.get_full_name|default:atualizacao.usuario.username }}"
+                                     class="rounded-circle me-2" 
+                                     style="width: 28px; height: 28px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 28px; height: 28px; font-size: 12px; color: white;">
+                                    {{ atualizacao.usuario.get_full_name.0|default:atualizacao.usuario.username.0|upper }}
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-1">
+                                    {{ atualizacao.usuario.get_full_name|default:atualizacao.usuario.username }}
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    {{ atualizacao.data_atualizacao|date:"d/m/Y H:i" }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="progress-update mb-1">
+                                <span class="badge bg-secondary">{{ atualizacao.progresso_anterior }}%</span>
+                                <i class="bi bi-arrow-right mx-1"></i>
+                                <span class="badge bg-{{ atualizacao.get_status_color }}">{{ atualizacao.progresso_novo }}%</span>
+                            </div>
+                            <div class="status-update">
+                                <small class="text-muted">Status:</small>
+                                <span class="badge bg-{{ atualizacao.get_status_color }}">
+                                    {{ atualizacao.status_novo|title }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="update-description mb-2">
+                        <p class="mb-0">{{ atualizacao.descricao_atualizacao|linebreaks }}</p>
+                    </div>
+                    
+                    {% if atualizacao.imagens.exists %}
+                    <div class="update-images">
+                        <small class="text-muted mb-2 d-block">
+                            <i class="bi bi-images me-1"></i>
+                            Fotos desta atualização:
+                        </small>
+                        <div class="row g-2">
+                            {% for imagem in atualizacao.imagens.all %}
+                            <div class="col-md-3 col-sm-4 col-6">
+                                <div class="card">
+                                    <img src="{{ imagem.imagem.url }}" 
+                                         alt="{{ imagem.descricao|default:'Imagem da atualização' }}" 
+                                         class="card-img-top" 
+                                         style="height: 80px; object-fit: cover; cursor: pointer;"
+                                         data-bs-toggle="modal" 
+                                         data-bs-target="#imageModal"
+                                         data-bs-image="{{ imagem.imagem.url }}"
+                                         data-bs-title="{{ imagem.descricao|default:'Imagem da atualização' }}">
+                                    {% if imagem.descricao %}
+                                    <div class="card-body p-1">
+                                        <p class="card-text small mb-0">{{ imagem.descricao }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Informações do Sistema -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Informações do Sistema
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>ID:</strong> {{ report.id }}</p>
+                <p><strong>Tenant ID:</strong> {{ report.tenant_id }}</p>
+                <p><strong>Criado em:</strong> {{ report.data_criacao|date:"d/m/Y H:i" }}</p>
+                <p><strong>Última atualização:</strong> {{ report.data_atualizacao|date:"d/m/Y H:i" }}</p>
+                {% if report.deleted_at %}
+                    <p><strong>Deletado em:</strong> {{ report.deleted_at|date:"d/m/Y H:i" }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Status Timeline -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Timeline de Status
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success {% if report.status == 'pendente' %}timeline-current{% endif %}"></div>
+                        <div class="timeline-content">
+                            <h6>Criado</h6>
+                            <small class="text-muted">{{ report.data_criacao|date:"d/m/Y H:i" }}</small>
+                            {% if report.status == 'pendente' %}
+                                <span class="badge bg-secondary ms-2">Status Atual</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if report.status == 'em_andamento' or report.status == 'resolvido' %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-warning {% if report.status == 'em_andamento' %}timeline-current{% endif %}"></div>
+                        <div class="timeline-content">
+                            <h6>Em Andamento</h6>
+                            <small class="text-muted">{{ report.data_atualizacao|date:"d/m/Y H:i" }}</small>
+                            {% if report.status == 'em_andamento' %}
+                                <span class="badge bg-warning ms-2">Status Atual</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if report.status == 'resolvido' %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success timeline-current"></div>
+                        <div class="timeline-content">
+                            <h6>Resolvido</h6>
+                            <small class="text-muted">{{ report.data_atualizacao|date:"d/m/Y H:i" }}</small>
+                            <span class="badge bg-success ms-2">Status Atual</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Visualizar Imagens -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalTitle">Imagem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imageModalImg" src="" alt="" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+{% if report.editavel and report.usuario == request.user or request.user.is_staff %}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o relatório <strong>"{{ report.titulo }}"</strong>?</p>
+                <p class="text-danger"><small>Esta ação não pode ser desfeita.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'reports:delete' report.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    transition: all 0.3s ease;
+}
+
+/* Animação pulsante para o status atual */
+.timeline-current {
+    animation: pulse-glow 2s infinite;
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+}
+
+/* Animações específicas por status */
+.timeline-current.bg-success {
+    animation: pulse-success 2s infinite;
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+}
+
+.timeline-current.bg-warning {
+    animation: pulse-warning 2s infinite;
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+}
+
+.timeline-current.bg-secondary {
+    animation: pulse-secondary 2s infinite;
+    box-shadow: 0 0 0 0 rgba(108, 117, 125, 0.7);
+}
+
+/* Keyframes para animações */
+@keyframes pulse-success {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 8px rgba(40, 167, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+@keyframes pulse-warning {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 8px rgba(255, 193, 7, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+@keyframes pulse-secondary {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(108, 117, 125, 0.7);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 8px rgba(108, 117, 125, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(108, 117, 125, 0);
+    }
+}
+
+@keyframes pulse-glow {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 8px rgba(0, 123, 255, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+/* Animações e efeitos visuais - padrão da lista */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.card-img-top, .img-fluid {
+    transition: transform 0.3s ease;
+}
+
+.card:hover .card-img-top,
+.card:hover .img-fluid {
+    transform: scale(1.03);
+}
+
+.badge {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Animação de entrada suave */
+.card-body {
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Efeito hover nas imagens principais */
+.img-fluid.rounded.shadow-sm {
+    border-radius: 0.5rem !important;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.img-fluid.rounded.shadow-sm:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* Efeito hover nas imagens da galeria */
+.card .card-img-top[data-bs-toggle="modal"] {
+    border-radius: 0.375rem 0.375rem 0 0;
+    overflow: hidden;
+}
+
+.card .card-img-top[data-bs-toggle="modal"]:hover {
+    transform: scale(1.05);
+}
+
+/* Timeline com animação */
+.timeline-item {
+    animation: slideInLeft 0.5s ease;
+    animation-fill-mode: both;
+}
+
+.timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.timeline-item:nth-child(2) { animation-delay: 0.2s; }
+.timeline-item:nth-child(3) { animation-delay: 0.3s; }
+
+/* Efeito hover nos marcadores da timeline */
+.timeline-marker:hover {
+    transform: scale(1.3);
+    z-index: 10;
+}
+
+/* Badge de status atual com animação sutil */
+.timeline-content .badge {
+    animation: fadeInScale 0.8s ease;
+    animation-delay: 1s;
+    animation-fill-mode: both;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Efeito hover nos cards da sidebar */
+.col-md-4 .card {
+    border: 1px solid rgba(0,0,0,0.125);
+}
+
+.col-md-4 .card:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Controlar modal de imagens
+    const imageModal = document.getElementById('imageModal');
+    if (imageModal) {
+        imageModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const imageSrc = button.getAttribute('data-bs-image');
+            const imageTitle = button.getAttribute('data-bs-title');
+            
+            const modalImg = document.getElementById('imageModalImg');
+            const modalTitle = document.getElementById('imageModalTitle');
+            
+            modalImg.src = imageSrc;
+            modalImg.alt = imageTitle;
+            modalTitle.textContent = imageTitle;
+        });
+    }
+
+    // Animação da barra de progresso
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        const targetWidth = progressBar.style.width;
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressBar.style.width = targetWidth;
+        }, 500);
+    }
+
+    // Efeito de entrada nos cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Efeito hover personalizado para badges
+    const badges = document.querySelectorAll('.badge');
+    badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1) rotate(2deg)';
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1) rotate(0deg)';
+        });
+    });
+
+    // Animação suave ao clicar em imagens
+    const clickableImages = document.querySelectorAll('img[data-bs-toggle="modal"]');
+    clickableImages.forEach(img => {
+        img.addEventListener('click', function() {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+
+    // Animações especiais para timeline
+    const timelineMarkers = document.querySelectorAll('.timeline-marker');
+    timelineMarkers.forEach((marker, index) => {
+        // Adicionar efeito de hover personalizado
+        marker.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('timeline-current')) {
+                this.style.transform = 'scale(1.3)';
+                this.style.transition = 'all 0.3s ease';
+            }
+        });
+        
+        marker.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('timeline-current')) {
+                this.style.transform = 'scale(1)';
+            }
+        });
+
+        // Adicionar animação de entrada escalonada
+        marker.style.opacity = '0';
+        marker.style.transform = 'scale(0)';
+        setTimeout(() => {
+            marker.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+            marker.style.opacity = '1';
+            marker.style.transform = 'scale(1)';
+        }, 300 + (index * 200));
+    });
+
+    // Efeito especial para o marcador atual
+    const currentMarker = document.querySelector('.timeline-current');
+    if (currentMarker) {
+        // Adicionar um efeito de "respiração" mais suave
+        currentMarker.addEventListener('animationiteration', function() {
+            // A cada ciclo da animação, adicionar um pequeno efeito extra
+            this.style.filter = 'brightness(1.2)';
+            setTimeout(() => {
+                this.style.filter = 'brightness(1)';
+            }, 100);
+        });
+    }
+    
+    // Funcionalidade do botão de atualizar status
+    const updateStatusBtn = document.getElementById('updateStatusBtn');
+    if (updateStatusBtn) {
+        updateStatusBtn.addEventListener('click', function() {
+            const reportId = {{ report.pk }};
+            const updateUrl = `/reports/${reportId}/update-status/`;
+            
+            console.log('Clicou no botão de atualizar:', updateUrl);
+            
+            // Mostrar loading
+            updateStatusBtn.disabled = true;
+            updateStatusBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Carregando...';
+            
+            fetch(updateUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Resposta do servidor:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Dados recebidos:', data);
+                if (data.success) {
+                    // Carregar conteúdo do modal
+                    const modalContent = document.getElementById('updateModalContent');
+                    if (modalContent) {
+                        modalContent.innerHTML = data.html;
+                        
+                        // Mostrar modal
+                        const modal = new bootstrap.Modal(document.getElementById('updateModal'));
+                        modal.show();
+                        
+                        // Inicializar JavaScript do modal após mostrar
+                        modal._element.addEventListener('shown.bs.modal', function() {
+                            console.log('🎯 Modal mostrado, inicializando JavaScript...');
+                            if (typeof window.initUpdateModal === 'function') {
+                                window.initUpdateModal();
+                            } else {
+                                console.error('❌ Função initUpdateModal não encontrada!');
+                            }
+                        });
+                        
+                    } else {
+                        console.error('Elemento updateModalContent não encontrado');
+                    }
+                } else {
+                    alert('Erro: ' + (data.message || 'Erro desconhecido'));
+                }
+            })
+            .catch(error => {
+                console.error('Erro na requisição:', error);
+                alert('Erro ao carregar formulário de atualização: ' + error.message);
+            })
+            .finally(() => {
+                // Restaurar botão
+                updateStatusBtn.disabled = false;
+                updateStatusBtn.innerHTML = '<i class="bi bi-arrow-up-circle me-1"></i>Atualizar Status';
+            });
+        });
+    } else {
+        console.log('Botão updateStatusBtn não encontrado');
+    }
+});
+</script>
+
+<!-- Modal para Atualizar Status -->
+<div class="modal fade" id="updateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="updateModalContent">
+            <!-- Conteúdo será carregado via AJAX -->
+        </div>
+    </div>
+</div>
+
+<!-- Navbar Mobile Fixa (apenas em telas pequenas) -->
+<nav class="navbar fixed-bottom bg-white border-top d-md-none mobile-navbar">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-around align-items-center w-100">
+            <!-- Voltar -->
+            <a href="{% url 'reports:list' %}" class="btn btn-link text-secondary p-2 flex-fill text-center">
+                <i class="bi bi-arrow-left fs-5 d-block"></i>
+                <small>Voltar</small>
+            </a>
+            
+            <!-- Atualizar Status -->
+            {% if pode_atualizar_status and report.status != 'resolvido' %}
+            <button type="button" class="btn btn-link text-warning p-2 flex-fill text-center" id="updateStatusBtnMobile">
+                <i class="bi bi-arrow-up-circle fs-5 d-block"></i>
+                <small>Atualizar</small>
+            </button>
+            {% endif %}
+            
+            <!-- Editar -->
+            {% if pode_editar %}
+            <a href="{% url 'reports:edit' report.pk %}" class="btn btn-link text-primary p-2 flex-fill text-center">
+                <i class="bi bi-pencil fs-5 d-block"></i>
+                <small>Editar</small>
+            </a>
+            
+            <!-- Duplicar -->
+            <a href="{% url 'reports:duplicate' report.pk %}" class="btn btn-link text-info p-2 flex-fill text-center">
+                <i class="bi bi-clipboard-plus fs-5 d-block"></i>
+                <small>Duplicar</small>
+            </a>
+            
+            <!-- Excluir -->
+            <button type="button" class="btn btn-link text-danger p-2 flex-fill text-center" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash fs-5 d-block"></i>
+                <small>Excluir</small>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- Botão Voltar ao Topo -->
+<button id="backToTop" class="btn btn-primary rounded-circle back-to-top" style="display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+<style>
+/* Navbar Mobile Fixa */
+.mobile-navbar {
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1030;
+    height: 70px;
+}
+
+.mobile-navbar .btn-link {
+    text-decoration: none;
+    border: none;
+    background: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-navbar .btn-link i {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link small {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.mobile-navbar .btn-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    transform: translateY(-2px);
+}
+
+.mobile-navbar .btn-link:active {
+    transform: translateY(0);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* Botão Voltar ao Topo */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 1020;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.back-to-top i {
+    font-size: 1.2rem;
+}
+
+/* Animação de entrada do botão */
+.back-to-top.show {
+    animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Efeito ripple ao clicar */
+.mobile-navbar .btn-link {
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-navbar .btn-link::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.mobile-navbar .btn-link:active::before {
+    width: 100px;
+    height: 100px;
+}
+
+/* Ajuste para não sobrepor a navbar mobile */
+@media (max-width: 767.98px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+</style>
+
+<script>
+// Adicionar funcionalidade do botão voltar ao topo
+document.addEventListener('DOMContentLoaded', function() {
+    const backToTopBtn = document.getElementById('backToTop');
+    
+    // Mostrar/esconder botão baseado no scroll
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            if (!backToTopBtn.style.display || backToTopBtn.style.display === 'none') {
+                backToTopBtn.style.display = 'block';
+                backToTopBtn.classList.add('show');
+            }
+        } else {
+            backToTopBtn.style.display = 'none';
+            backToTopBtn.classList.remove('show');
+        }
+    });
+    
+    // Função de voltar ao topo
+    backToTopBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        // Efeito visual ao clicar
+        this.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1)';
+        }, 150);
+    });
+    
+    // Funcionalidade para o botão mobile de atualizar status
+    const updateStatusBtnMobile = document.getElementById('updateStatusBtnMobile');
+    if (updateStatusBtnMobile) {
+        updateStatusBtnMobile.addEventListener('click', function() {
+            // Usar a mesma funcionalidade do botão desktop
+            const updateStatusBtn = document.getElementById('updateStatusBtn');
+            if (updateStatusBtn) {
+                updateStatusBtn.click();
+            }
+        });
+    }
+    
+    // Efeito de vibração no mobile (se suportado)
+    if ('vibrate' in navigator) {
+        const mobileButtons = document.querySelectorAll('.mobile-navbar .btn-link');
+        mobileButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                navigator.vibrate(50); // Vibração sutil de 50ms
+            });
+        });
+    }
+});
+</script>
+
+{% endblock %} 
