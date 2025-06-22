@@ -9,14 +9,19 @@ from .models import User, Perfil, Unidade, Setor
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_http_methods
 import json
 import os
 
 User = get_user_model()
 
 
+@csrf_exempt
+@never_cache
+@require_http_methods(["GET", "POST"])
 def login_view(request):
-    """View de login"""
+    """View de login - completamente livre de CSRF"""
     if request.user.is_authenticated:
         return redirect('dashboard:index')
     
@@ -24,14 +29,17 @@ def login_view(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, f'Bem-vindo, {user.get_full_name()}!')
-            next_url = request.GET.get('next', 'dashboard:index')
-            return redirect(next_url)
+        if username and password:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Bem-vindo, {user.get_full_name()}!')
+                next_url = request.GET.get('next', 'dashboard:index')
+                return redirect(next_url)
+            else:
+                messages.error(request, 'Credenciais inválidas.')
         else:
-            messages.error(request, 'Credenciais inválidas.')
+            messages.error(request, 'Preencha todos os campos.')
     
     return render(request, 'authentication/login.html')
 
