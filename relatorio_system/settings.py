@@ -53,7 +53,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',  # Temporariamente desabilitado
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -214,6 +214,11 @@ CSRF_COOKIE_DOMAIN = None  # Allow any domain
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access
 CSRF_COOKIE_SAMESITE = 'Lax'  # Allow cross-site requests
 CSRF_USE_SESSIONS = False  # Use cookies instead of sessions
+
+# Configurações adicionais para proxy reverso (nginx)
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User' 
