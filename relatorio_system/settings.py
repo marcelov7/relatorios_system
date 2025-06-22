@@ -193,12 +193,21 @@ CELERY_RESULT_SERIALIZER = 'json'
 if ENVIRONMENT == 'production' or not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = 86400
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    # Comentado até implementar HTTPS
+    # SECURE_HSTS_SECONDS = 86400
+    # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # SECURE_HSTS_PRELOAD = True
+    # SESSION_COOKIE_SECURE = True
+    # CSRF_COOKIE_SECURE = True
+    # SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    'http://app.devaxis.com.br',
+    'https://app.devaxis.com.br',
+    'http://localhost',
+    'http://127.0.0.1',
+]
 
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User' 
