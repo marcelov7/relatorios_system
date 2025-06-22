@@ -1,10 +1,7 @@
 from django.db import models
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import date, timedelta
-
-User = get_user_model()
 
 
 class Local(models.Model):
@@ -37,10 +34,10 @@ class Local(models.Model):
     telefone = models.CharField(max_length=20, blank=True, verbose_name='Telefone')
     email = models.EmailField(blank=True, verbose_name='E-mail')
     responsavel = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
+        'authentication.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         verbose_name='Responsável',
         related_name='locais_responsavel'
     )
@@ -144,10 +141,10 @@ class Equipamento(models.Model):
     )
     garantia_ate = models.DateField(null=True, blank=True, verbose_name='Garantia até')
     responsavel = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
+        'authentication.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         verbose_name='Responsável',
         related_name='equipamentos_responsavel'
     )
@@ -265,10 +262,10 @@ class Motor(models.Model):
     
     # Responsável pelo motor
     responsavel = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
+        'authentication.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         verbose_name='Responsável',
         related_name='motores_responsavel'
     )
