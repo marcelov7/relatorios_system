@@ -18,7 +18,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 # Detectar ambiente automaticamente
 ENVIRONMENT = config('ENVIRONMENT', default='development')  # development ou production
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,.render.com,app.devaxis.com.br').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,.render.com,app.devaxis.com.br,31.97.168.137').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -209,6 +209,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://app.devaxis.com.br',
     'http://localhost',
     'http://127.0.0.1',
+    'http://31.97.168.137',
 ]
 
 # CSRF cookie settings for cross-domain support
