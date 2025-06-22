@@ -214,6 +214,7 @@ CSRF_COOKIE_DOMAIN = None  # Allow any domain
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access
 CSRF_COOKIE_SAMESITE = 'Lax'  # Allow cross-site requests
 CSRF_USE_SESSIONS = False  # Use cookies instead of sessions
+CSRF_COOKIE_SECURE = False  # Allow HTTP (não apenas HTTPS)
 
 # Configurações adicionais para proxy reverso (nginx)
 USE_X_FORWARDED_HOST = True
