@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'authentication',
     'reports',
     'dashboard',
-    # 'locations',  # Temporariamente desabilitado para debug
+    'locations',  # Reabilitado - necessário para o deploy
     # 'notifications_app',
 ]
 
