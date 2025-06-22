@@ -112,6 +112,7 @@
                                 <i class="bi bi-graph-up me-1"></i>Analytics
                             </a>
                         </li>
+                        <!-- Temporariamente removido para debug
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'locations:dashboard' %}">
                                 <i class="bi bi-building me-1"></i>Locais
@@ -122,6 +123,7 @@
                                 <i class="bi bi-lightning-charge me-1"></i>Motores
                             </a>
                         </li>
+                        -->
                         {% if user.is_staff %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'admin:index' %}">

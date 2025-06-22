@@ -12,7 +12,7 @@ urlpatterns = [
     path('auth/', include('authentication.urls')),
     path('reports/', include('reports.urls')),
     path('dashboard/', include('dashboard.urls')),
-    path('locations/', include('locations.urls')),
+    # path('locations/', include('locations.urls')),  # Temporariamente desabilitado
     # path('notifications/', include('notifications_app.urls')),
     # path('inbox/notifications/', include('notifications.urls', namespace='notifications')),
     
